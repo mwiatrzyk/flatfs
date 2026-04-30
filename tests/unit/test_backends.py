@@ -3,7 +3,7 @@ from typing import Optional
 
 import pytest
 
-from flatfs.backends import LocalFlatFs
+from flatfs.backends import InMemoryFlatFs, LocalFlatFs
 from flatfs.exc import PathAccessError
 from flatfs.interface import FlatFsReaderWriter
 

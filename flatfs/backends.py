@@ -1,9 +1,9 @@
 import fnmatch
 import os
 import pathlib
-from typing import Iterable, Iterator, Optional
+from typing import AsyncGenerator, AsyncIterable, AsyncIterator, Iterable, Iterator, Optional
 
-from flatfs.exc import PathAccessError
+from flatfs.exc import PathAccessError, PathNotFoundError
 
 from . import _utils
 
@@ -77,10 +77,14 @@ class LocalFlatFs:
 
     def read_bytes(self, path: str) -> bytes:
         abspath = self.__make_abspath(path)
+        if not abspath.is_file():
+            raise PathNotFoundError(path)
         return abspath.read_bytes()
 
     def read_chunks(self, path: str, chunk_size: int = 65535) -> Iterator[bytes]:
         abspath = self.__make_abspath(path)
+        if not abspath.is_file():
+            raise PathNotFoundError(path)
         with abspath.open("rb") as fd:
             while True:
                 chunk = fd.read(chunk_size)
@@ -102,4 +106,101 @@ class LocalFlatFs:
 
     def remove(self, path: str):
         abspath = self.__make_abspath(path)
+        if not abspath.is_file():
+            raise PathNotFoundError(path)
         abspath.unlink()
+
+
+class InMemoryFlatFs:
+    """In-memory FlatFS implementation.
+
+    This is mostly suitable for use during testing to avoid unnecessary I/O and
+    disk usage.
+    """
+
+    def __init__(self):
+        self.__storage: dict[str, bytes] = {}
+
+    def __make_key(self, path: str) -> str:
+        normalized_key = _utils.normalize_path(path)
+        return normalized_key
+
+    def scan(self) -> Iterator[str]:
+        return iter(self.__storage.keys())
+
+    def exists(self, path: str) -> bool:
+        return self.__make_key(path) in self.__storage
+
+    def read_bytes(self, path: str) -> bytes:
+        key = self.__make_key(path)
+        if key not in self.__storage:
+            raise PathNotFoundError(path)
+        return self.__storage[key]
+
+    def read_chunks(self, path: str, chunk_size: int = 65535) -> Iterator[bytes]:
+        key = self.__make_key(path)
+        if key not in self.__storage:
+            raise PathNotFoundError(path)
+        data_left = self.__storage[key]
+        while len(data_left) > 0:
+            chunk = data_left[:chunk_size]
+            data_left = data_left[chunk_size:]
+            yield chunk
+
+    def write_bytes(self, path: str, data: bytes):
+        self.__storage[self.__make_key(path)] = data
+
+    def write_chunks(self, path: str, chunks: Iterable[bytes]):
+        self.__storage[self.__make_key(path)] = b"".join(chunks)
+
+    def remove(self, path: str):
+        key = self.__make_key(path)
+        if key not in self.__storage:
+            raise PathNotFoundError(path)
+        del self.__storage[key]
+
+
+class AsyncInMemoryFlatFs:
+    """Async variant of the :class:`InMemoryFlatFs` class."""
+
+    def __init__(self) -> None:
+        self.__storage: dict[str, bytes] = {}
+
+    def __make_key(self, path: str) -> str:
+        normalized_key = _utils.normalize_path(path)
+        return normalized_key
+
+    async def scan(self) -> AsyncGenerator[str, None]:
+        for key in self.__storage:
+            yield key
+
+    async def exists(self, path: str) -> bool:
+        return self.__make_key(path) in self.__storage
+
+    async def read_bytes(self, path: str) -> bytes:
+        key = self.__make_key(path)
+        if key not in self.__storage:
+            raise PathNotFoundError(path)
+        return self.__storage[key]
+
+    async def read_chunks(self, path: str, chunk_size: int=65535) -> AsyncGenerator[bytes, None]:
+        key = self.__make_key(path)
+        if key not in self.__storage:
+            raise PathNotFoundError(path)
+        data_left = self.__storage[key]
+        while len(data_left) > 0:
+            chunk = data_left[:chunk_size]
+            data_left = data_left[chunk_size:]
+            yield chunk
+
+    async def write_bytes(self, path: str, data: bytes):
+        self.__storage[self.__make_key(path)] = data
+
+    async def write_chunks(self, path: str, chunks: AsyncIterable[bytes]):
+        self.__storage[self.__make_key(path)] = b"".join([x async for x in chunks])
+
+    async def remove(self, path: str):
+        key = self.__make_key(path)
+        if key not in self.__storage:
+            raise PathNotFoundError(path)
+        del self.__storage[key]
