@@ -5,6 +5,7 @@ import pytest
 
 from flatfs.backends import AsyncFlatFsAdapter, InMemoryFlatFs, LocalFlatFs
 from flatfs.exc import PathNotFoundError
+from flatfs.helpers import async_read_bytes, async_read_text, async_write_bytes, async_write_text
 from flatfs.interface import AsyncFlatFsReaderWriter
 
 UUT = AsyncFlatFsReaderWriter
@@ -57,13 +58,18 @@ def normalized_path(path_normalized_path: tuple):
     return path_normalized_path[1]
 
 
-async def test_create_file_and_read_it_back(uut: UUT, path: str, data: bytes):
-    await uut.write_bytes(path, data)
-    assert await uut.read_bytes(path) == data
+async def test_binary_file_and_read_it_back(uut: UUT, path: str, data: bytes):
+    await async_write_bytes(uut, path, data)
+    assert await async_read_bytes(uut, path) == data
+
+
+async def test_text_file_and_read_it_back(uut: UUT, path: str):
+    await async_write_text(uut, path, "some text")
+    assert await async_read_text(uut, path) == "some text"
 
 
 async def test_create_file_and_read_it_back_in_chunks(uut: UUT, path: str, data: bytes):
-    await uut.write_bytes(path, data)
+    await async_write_bytes(uut, path, data)
     chunks = [c async for c in uut.read_chunks(path, chunk_size=5)]
     assert len(chunks) > 1
     assert b"".join(chunks) == data
@@ -75,32 +81,26 @@ async def test_create_file_from_chunks_and_read_it_back(uut: UUT, path: str, chu
             yield chunk
 
     await uut.write_chunks(path, gen())
-    assert await uut.read_bytes(path) == b"".join(chunked_data)
+    assert await async_read_bytes(uut, path) == b"".join(chunked_data)
 
 
 async def test_check_if_file_exists(uut: UUT, path: str, data: bytes):
     assert await uut.exists(path) is False
-    await uut.write_bytes(path, data)
+    await async_write_bytes(uut, path, data)
     assert await uut.exists(path) is True
 
 
 async def test_removed_file_no_longer_exists(uut: UUT, path: str, data: bytes):
     assert await uut.exists(path) is False
-    await uut.write_bytes(path, data)
+    await async_write_bytes(uut, path, data)
     assert await uut.exists(path) is True
     await uut.remove(path)
     assert await uut.exists(path) is False
 
 
 async def test_scan_returns_normalized_path_to_existing_file(uut: UUT, path: str, data: bytes, normalized_path: str):
-    await uut.write_bytes(path, data)
+    await async_write_bytes(uut, path, data)
     assert list([x async for x in uut.scan()]) == [normalized_path]
-
-
-async def test_read_bytes_raises_path_not_found_if_files_does_not_exist(uut: UUT, path: str):
-    with pytest.raises(PathNotFoundError) as excinfo:
-        await uut.read_bytes(path)
-    assert excinfo.value.path == path
 
 
 async def test_read_chunks_raises_path_not_found_if_files_does_not_exist(uut: UUT, path: str):
@@ -115,13 +115,7 @@ async def test_remove_raises_path_not_found_if_files_does_not_exist(uut: UUT, pa
     assert excinfo.value.path == path
 
 
-async def test_double_read_bytes_returns_same_data(uut: UUT, path: str, data: bytes):
-    await uut.write_bytes(path, data)
-    assert await uut.read_bytes(path) == data
-    assert await uut.read_bytes(path) == data
-
-
 async def test_double_read_chunks_returns_same_data(uut: UUT, path: str, data: bytes):
-    await uut.write_bytes(path, data)
+    await async_write_bytes(uut, path, data)
     assert b"".join([x async for x in uut.read_chunks(path)]) == data
     assert b"".join([x async for x in uut.read_chunks(path)]) == data

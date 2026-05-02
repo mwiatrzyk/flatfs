@@ -12,11 +12,14 @@ from . import _utils
 
 
 class LocalFlatFs:
-    """FlatFS implementation that adapts local filesystem and uses
-    :mod:`pathlib` Python module as a backend.
+    """FlatFS implementation using local filesystem to store files.
+
+    You can use this to access files from an existing directory (the paths are
+    then relative to *root_dir*), or to create a completely new filesystem
+    inside an empty directory.
 
     :param root_dir:
-        The path to the FlatFS root directory.
+        The path to the root directory where files will be stored.
 
     :param exclude:
         The glob patterns of paths to exclude.
@@ -78,12 +81,6 @@ class LocalFlatFs:
         abspath = self.__make_abspath(path)
         return abspath.is_file()
 
-    def read_bytes(self, path: str) -> bytes:
-        abspath = self.__make_abspath(path)
-        if not abspath.is_file():
-            raise PathNotFoundError(path)
-        return abspath.read_bytes()
-
     def read_chunks(self, path: str, chunk_size: int = 65535) -> Iterator[bytes]:
         abspath = self.__make_abspath(path)
         if not abspath.is_file():
@@ -94,11 +91,6 @@ class LocalFlatFs:
                 if not chunk:
                     break
                 yield chunk
-
-    def write_bytes(self, path: str, data: bytes):
-        abspath = self.__make_abspath(path)
-        abspath.parent.mkdir(parents=True, exist_ok=True)
-        abspath.write_bytes(data)
 
     def write_chunks(self, path: str, chunks: Iterable[bytes]):
         abspath = self.__make_abspath(path)
@@ -134,12 +126,6 @@ class InMemoryFlatFs:
     def exists(self, path: str) -> bool:
         return self.__make_key(path) in self.__storage
 
-    def read_bytes(self, path: str) -> bytes:
-        key = self.__make_key(path)
-        if key not in self.__storage:
-            raise PathNotFoundError(path)
-        return self.__storage[key]
-
     def read_chunks(self, path: str, chunk_size: int = 65535) -> Iterator[bytes]:
         key = self.__make_key(path)
         if key not in self.__storage:
@@ -149,9 +135,6 @@ class InMemoryFlatFs:
             chunk = data_left[:chunk_size]
             data_left = data_left[chunk_size:]
             yield chunk
-
-    def write_bytes(self, path: str, data: bytes):
-        self.__storage[self.__make_key(path)] = data
 
     def write_chunks(self, path: str, chunks: Iterable[bytes]):
         self.__storage[self.__make_key(path)] = b"".join(chunks)
@@ -166,6 +149,11 @@ class InMemoryFlatFs:
 class AsyncFlatFsAdapter:
     """Adapter that wraps given :class:`flatfs.interface.FlatFsReaderWriter`
     with async interface.
+
+    You can use this to adapt e.g. :class:`LocalFlatFs` or
+    :class:`InMemoryFlatFs` objects with async interface allowing for
+    convenient use with async code. The blocking calls are dispatched to
+    background worker which communicates with the caller using queues.
 
     :param target:
         The target FlatFS reader-writer to wrap.
@@ -193,9 +181,6 @@ class AsyncFlatFsAdapter:
     async def exists(self, path: str) -> bool:
         return await _utils.run_blocking(self.__target.exists, path)
 
-    async def read_bytes(self, path: str) -> bytes:
-        return await _utils.run_blocking(self.__target.read_bytes, path)
-
     async def read_chunks(self, path: str, chunk_size: int = 65535) -> AsyncGenerator[bytes, None]:
 
         def reader():
@@ -216,9 +201,6 @@ class AsyncFlatFsAdapter:
             if isinstance(chunk_or_exc, Exception):
                 raise chunk_or_exc
             yield chunk_or_exc
-
-    async def write_bytes(self, path: str, data: bytes):
-        await _utils.run_blocking(self.__target.write_bytes, path, data)
 
     async def write_chunks(self, path: str, chunks: AsyncIterable[bytes]):
 

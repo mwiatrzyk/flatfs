@@ -1,31 +1,8 @@
-from typing import AsyncGenerator, AsyncIterable, AsyncIterator, Iterable, Iterator, Protocol
+from typing import AsyncGenerator, AsyncIterable, Iterable, Iterator, Protocol
 
 
-class FlatFsReader(Protocol):
-    """Read-only interface to access files in the flat filesystem."""
-
-    def scan(self) -> Iterator[str]:
-        """Scan filesystem and generate paths to existing files.
-
-        Each yielded path can later be used with other methods of this
-        interface.
-        """
-        ...
-
-    def exists(self, path: str) -> bool:
-        """Check if *path* points to an existing file."""
-        ...
-
-    def read_bytes(self, path: str) -> bytes:
-        """Read entire file and return as bytes.
-
-        If *path* does not point to an existing file,
-        :exc:`flatfs.exc.PathNotFoundError` will be raised.
-
-        :param path:
-            The path to a file to read.
-        """
-        ...
+class SupportsReadChunks(Protocol):
+    """Protocol for objects that support chunked reading."""
 
     def read_chunks(self, path: str, chunk_size: int = 65535) -> Iterator[bytes]:
         """Read file in chunks and return iterator yielding chunks.
@@ -47,22 +24,8 @@ class FlatFsReader(Protocol):
         ...
 
 
-class FlatFsReaderWriter(FlatFsReader, Protocol):
-    """Read-write interface to access files in the flat filesystem."""
-
-    def write_bytes(self, path: str, data: bytes):
-        """Create or overwrite file at given *path* using *data* as file content.
-
-        :param path:
-            The path to a file to create or modify.
-
-        :param data:
-            The data to write to a file.
-
-            It will replace any existing file content, and will become the new
-            file content.
-        """
-        ...
+class SupportsWriteChunks(Protocol):
+    """Protocol for object that support writing in chunks."""
 
     def write_chunks(self, path: str, chunks: Iterable[bytes]):
         """Create or overwrite file at given *path* and write chunks of data
@@ -76,6 +39,26 @@ class FlatFsReaderWriter(FlatFsReader, Protocol):
         """
         ...
 
+
+class FlatFsReader(SupportsReadChunks, Protocol):
+    """Read-only interface to access files in the flat filesystem."""
+
+    def scan(self) -> Iterator[str]:
+        """Scan filesystem and generate paths to existing files.
+
+        Each yielded path can later be used with other methods of this
+        interface.
+        """
+        ...
+
+    def exists(self, path: str) -> bool:
+        """Check if *path* points to an existing file."""
+        ...
+
+
+class FlatFsReaderWriter(FlatFsReader, SupportsWriteChunks, Protocol):
+    """Read-write interface to access files in the flat filesystem."""
+
     def remove(self, path: str):
         """Remove file at given *path*.
 
@@ -88,31 +71,7 @@ class FlatFsReaderWriter(FlatFsReader, Protocol):
         ...
 
 
-class AsyncFlatFsReader(Protocol):
-    """Async read-only interface to access files in the flat filesystem."""
-
-    def scan(self) -> AsyncGenerator[str, None]:
-        """Scan filesystem and generate paths to existing files.
-
-        Each yielded path can later be used with other methods of this
-        interface.
-        """
-        ...
-
-    async def exists(self, path: str) -> bool:
-        """Check if *path* points to an existing file."""
-        ...
-
-    async def read_bytes(self, path: str) -> bytes:
-        """Read entire file and return as bytes.
-
-        If *path* does not point to an existing file,
-        :exc:`flatfs.exc.PathNotFoundError` will be raised.
-
-        :param path:
-            The path to a file to read.
-        """
-        ...
+class SupportsAsyncReadChunks(Protocol):
 
     def read_chunks(self, path: str, chunk_size: int = 65535) -> AsyncGenerator[bytes, None]:
         """Read file in chunks and return iterator yielding chunks.
@@ -134,22 +93,7 @@ class AsyncFlatFsReader(Protocol):
         ...
 
 
-class AsyncFlatFsReaderWriter(AsyncFlatFsReader, Protocol):
-    """Async read-write interface to access files in the flat filesystem."""
-
-    async def write_bytes(self, path: str, data: bytes):
-        """Create or overwrite file at given *path* using *data* as file content.
-
-        :param path:
-            The path to a file to create or modify.
-
-        :param data:
-            The data to write to a file.
-
-            It will replace any existing file content, and will become the new
-            file content.
-        """
-        ...
+class SupportsAsyncWriteChunks(Protocol):
 
     async def write_chunks(self, path: str, chunks: AsyncIterable[bytes]):
         """Create or overwrite file at given *path* and write chunks of data
@@ -162,6 +106,26 @@ class AsyncFlatFsReaderWriter(AsyncFlatFsReader, Protocol):
             Iterable providing chunks of bytes to write to a file.
         """
         ...
+
+
+class AsyncFlatFsReader(SupportsAsyncReadChunks, Protocol):
+    """Async read-only interface to access files in the flat filesystem."""
+
+    def scan(self) -> AsyncGenerator[str, None]:
+        """Scan filesystem and generate paths to existing files.
+
+        Each yielded path can later be used with other methods of this
+        interface.
+        """
+        ...
+
+    async def exists(self, path: str) -> bool:
+        """Check if *path* points to an existing file."""
+        ...
+
+
+class AsyncFlatFsReaderWriter(AsyncFlatFsReader, SupportsAsyncWriteChunks, Protocol):
+    """Async read-write interface to access files in the flat filesystem."""
 
     async def remove(self, path: str):
         """Remove file at given *path*.

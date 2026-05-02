@@ -13,6 +13,12 @@ def format(ctx: Context):
 
 
 @task
+def coverage(ctx: Context):
+    """Check code coverage."""
+    ctx.run("pytest --cov-branch --cov=flatfs")
+
+
+@task
 def check(ctx: Context):
     """Run all checks."""
     ctx.run("pytest")
