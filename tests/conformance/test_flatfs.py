@@ -10,10 +10,12 @@ from flatfs.interface import FlatFsReaderWriter
 UUT = FlatFsReaderWriter
 
 
-@pytest.fixture(params=[
-    lambda root_dir: LocalFlatFs(root_dir),
-    lambda root_dir: InMemoryFlatFs(),
-])
+@pytest.fixture(
+    params=[
+        lambda root_dir: LocalFlatFs(root_dir),
+        lambda root_dir: InMemoryFlatFs(),
+    ]
+)
 def uut_factory(request):
     return request.param
 
@@ -23,26 +25,24 @@ def uut(uut_factory: Callable[[pathlib.Path], UUT], tmp_path: pathlib.Path):
     return uut_factory(tmp_path)
 
 
-@pytest.fixture(params=[
-    ("foo.txt", "/foo.txt"),
-    ("/bar.txt", "/bar.txt"),
-    ("/spam/baz/dummy.txt", "/spam/baz/dummy.txt"),
-    ("/spam/baz/../dummy.txt", "/spam/dummy.txt"),
-])
+@pytest.fixture(
+    params=[
+        ("foo.txt", "/foo.txt"),
+        ("/bar.txt", "/bar.txt"),
+        ("/spam/baz/dummy.txt", "/spam/baz/dummy.txt"),
+        ("/spam/baz/../dummy.txt", "/spam/dummy.txt"),
+    ]
+)
 def path_normalized_path(request):
     return request.param
 
 
-@pytest.fixture(params=[
-    b"the dummy file content"
-])
+@pytest.fixture(params=[b"the dummy file content"])
 def data(request):
     return request.param
 
 
-@pytest.fixture(params=[
-    [b"the", b" dummy", b" file", b" content"]
-])
+@pytest.fixture(params=[[b"the", b" dummy", b" file", b" content"]])
 def chunked_data(request):
     return request.param
 

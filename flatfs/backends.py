@@ -1,9 +1,12 @@
+import asyncio
 import fnmatch
 import os
 import pathlib
-from typing import AsyncGenerator, AsyncIterable, AsyncIterator, Iterable, Iterator, Optional
+from queue import Queue
+from typing import AsyncGenerator, AsyncIterable, Generator, Iterable, Iterator, Optional
 
 from flatfs.exc import PathAccessError, PathNotFoundError
+from flatfs.interface import FlatFsReaderWriter
 
 from . import _utils
 
@@ -160,47 +163,78 @@ class InMemoryFlatFs:
         del self.__storage[key]
 
 
-class AsyncInMemoryFlatFs:
-    """Async variant of the :class:`InMemoryFlatFs` class."""
+class AsyncFlatFsAdapter:
+    """Adapter that wraps given :class:`flatfs.interface.FlatFsReaderWriter`
+    with async interface.
 
-    def __init__(self) -> None:
-        self.__storage: dict[str, bytes] = {}
+    :param target:
+        The target FlatFS reader-writer to wrap.
+    """
 
-    def __make_key(self, path: str) -> str:
-        normalized_key = _utils.normalize_path(path)
-        return normalized_key
+    def __init__(self, target: FlatFsReaderWriter):
+        self.__target = target
 
     async def scan(self) -> AsyncGenerator[str, None]:
-        for key in self.__storage:
-            yield key
+
+        def scanner():
+            for path in self.__target.scan():
+                loop.call_soon_threadsafe(queue.put_nowait, path)
+            loop.call_soon_threadsafe(queue.put_nowait, "")
+
+        loop = asyncio.get_running_loop()
+        asyncio.create_task(_utils.run_blocking(scanner))
+        queue = asyncio.Queue()
+        while True:
+            path = await queue.get()
+            if not path:
+                break
+            yield path
 
     async def exists(self, path: str) -> bool:
-        return self.__make_key(path) in self.__storage
+        return await _utils.run_blocking(self.__target.exists, path)
 
     async def read_bytes(self, path: str) -> bytes:
-        key = self.__make_key(path)
-        if key not in self.__storage:
-            raise PathNotFoundError(path)
-        return self.__storage[key]
+        return await _utils.run_blocking(self.__target.read_bytes, path)
 
-    async def read_chunks(self, path: str, chunk_size: int=65535) -> AsyncGenerator[bytes, None]:
-        key = self.__make_key(path)
-        if key not in self.__storage:
-            raise PathNotFoundError(path)
-        data_left = self.__storage[key]
-        while len(data_left) > 0:
-            chunk = data_left[:chunk_size]
-            data_left = data_left[chunk_size:]
-            yield chunk
+    async def read_chunks(self, path: str, chunk_size: int = 65535) -> AsyncGenerator[bytes, None]:
+
+        def reader():
+            try:
+                for chunk in self.__target.read_chunks(path, chunk_size):
+                    loop.call_soon_threadsafe(queue.put_nowait, chunk)
+                loop.call_soon_threadsafe(queue.put_nowait, b"")
+            except Exception as e:
+                loop.call_soon_threadsafe(queue.put_nowait, e)
+
+        loop = asyncio.get_running_loop()
+        queue = asyncio.Queue()
+        asyncio.create_task(_utils.run_blocking(reader))
+        while True:
+            chunk_or_exc = await queue.get()
+            if not chunk_or_exc:
+                break
+            if isinstance(chunk_or_exc, Exception):
+                raise chunk_or_exc
+            yield chunk_or_exc
 
     async def write_bytes(self, path: str, data: bytes):
-        self.__storage[self.__make_key(path)] = data
+        await _utils.run_blocking(self.__target.write_bytes, path, data)
 
     async def write_chunks(self, path: str, chunks: AsyncIterable[bytes]):
-        self.__storage[self.__make_key(path)] = b"".join([x async for x in chunks])
+
+        def gen() -> Generator[bytes, None, None]:
+            while True:
+                chunk = queue.get()
+                if not chunk:
+                    return
+                yield chunk
+
+        queue = Queue()
+        task = asyncio.create_task(_utils.run_blocking(self.__target.write_chunks, path, gen()))
+        async for chunk in chunks:
+            queue.put(chunk)
+        queue.put(b"")
+        await task
 
     async def remove(self, path: str):
-        key = self.__make_key(path)
-        if key not in self.__storage:
-            raise PathNotFoundError(path)
-        del self.__storage[key]
+        await _utils.run_blocking(self.__target.remove, path)

@@ -1,4 +1,10 @@
+import asyncio
+import functools
+from typing import Callable, TypeVar
+
 from flatfs.exc import PathAccessError
+
+T = TypeVar("T")
 
 
 def normalize_path(path: str) -> str:
@@ -25,3 +31,22 @@ def normalize_path(path: str) -> str:
     if out[0] == "/":
         return out
     return "/" + out
+
+
+async def run_blocking(func: Callable[..., T], *args, **kwargs) -> T:
+    """Run blocking (i.e. non-async) task in an event loop's default
+    executor.
+
+    On success, return *func*'s result, on failure raise *func*'s exception.
+
+    :param func:
+        The non-async callable to run.
+
+    :param `*args`:
+        Positional args to be passed to *func*.
+
+    :param `**kwargs`:
+        Named args to be passed to *func*.
+    """
+    wrapped_func = functools.partial(func, *args, **kwargs)
+    return await asyncio.get_running_loop().run_in_executor(None, wrapped_func)

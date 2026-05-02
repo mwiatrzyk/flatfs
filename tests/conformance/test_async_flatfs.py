@@ -3,17 +3,19 @@ from typing import Callable
 
 import pytest
 
-from flatfs.backends import AsyncInMemoryFlatFs, LocalFlatFs
+from flatfs.backends import AsyncFlatFsAdapter, InMemoryFlatFs, LocalFlatFs
 from flatfs.exc import PathNotFoundError
 from flatfs.interface import AsyncFlatFsReaderWriter
 
 UUT = AsyncFlatFsReaderWriter
 
 
-@pytest.fixture(params=[
-    #lambda root_dir: LocalFlatFs(root_dir),
-    lambda root_dir: AsyncInMemoryFlatFs(),
-])
+@pytest.fixture(
+    params=[
+        lambda root_dir: AsyncFlatFsAdapter(LocalFlatFs(root_dir)),
+        lambda root_dir: AsyncFlatFsAdapter(InMemoryFlatFs()),
+    ]
+)
 def uut_factory(request):
     return request.param
 
@@ -23,26 +25,24 @@ def uut(uut_factory: Callable[[pathlib.Path], UUT], tmp_path: pathlib.Path):
     return uut_factory(tmp_path)
 
 
-@pytest.fixture(params=[
-    ("foo.txt", "/foo.txt"),
-    ("/bar.txt", "/bar.txt"),
-    ("/spam/baz/dummy.txt", "/spam/baz/dummy.txt"),
-    ("/spam/baz/../dummy.txt", "/spam/dummy.txt"),
-])
+@pytest.fixture(
+    params=[
+        ("foo.txt", "/foo.txt"),
+        ("/bar.txt", "/bar.txt"),
+        ("/spam/baz/dummy.txt", "/spam/baz/dummy.txt"),
+        ("/spam/baz/../dummy.txt", "/spam/dummy.txt"),
+    ]
+)
 def path_normalized_path(request):
     return request.param
 
 
-@pytest.fixture(params=[
-    b"the dummy file content"
-])
+@pytest.fixture(params=[b"the dummy file content"])
 def data(request):
     return request.param
 
 
-@pytest.fixture(params=[
-    [b"the", b" dummy", b" file", b" content"]
-])
+@pytest.fixture(params=[[b"the", b" dummy", b" file", b" content"]])
 def chunked_data(request):
     return request.param
 
@@ -73,6 +73,7 @@ async def test_create_file_from_chunks_and_read_it_back(uut: UUT, path: str, chu
     async def gen():
         for chunk in chunked_data:
             yield chunk
+
     await uut.write_chunks(path, gen())
     assert await uut.read_bytes(path) == b"".join(chunked_data)
 
