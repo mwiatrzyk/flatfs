@@ -3,10 +3,16 @@ from typing import Callable
 
 import pytest
 
-from flatfs.backends import InMemoryFlatFs, LocalFlatFs
-from flatfs.exc import PathNotFoundError
-from flatfs.helpers import read_bytes, read_text, write_bytes, write_text
-from flatfs.interface import FlatFsReaderWriter
+from flatfs.api import (
+    InMemoryFlatFs,
+    LocalFlatFs,
+    PathNotFoundError,
+    FlatFsReaderWriter,
+    read_bytes,
+    read_text,
+    write_bytes,
+    write_text,
+)
 
 UUT = FlatFsReaderWriter
 

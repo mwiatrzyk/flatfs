@@ -1,6 +1,10 @@
+from . import _export
 from .interface import SupportsAsyncReadChunks, SupportsAsyncWriteChunks, SupportsReadChunks, SupportsWriteChunks
 
+__all__ = export = _export.Export()  # type: ignore
 
+
+@export
 def read_bytes(fs: SupportsReadChunks, path: str, chunk_size: int = 65535) -> bytes:
     """Read whole file and return as bytes.
 
@@ -24,6 +28,7 @@ def read_bytes(fs: SupportsReadChunks, path: str, chunk_size: int = 65535) -> by
     return out
 
 
+@export
 def write_bytes(fs: SupportsWriteChunks, path: str, data: bytes, chunk_size: int = 65535):
     """Write given data to file at given path either creating the file, or
     replacing with new content.
@@ -58,6 +63,7 @@ def write_bytes(fs: SupportsWriteChunks, path: str, data: bytes, chunk_size: int
     fs.write_chunks(path, gen())
 
 
+@export
 def read_text(fs: SupportsReadChunks, path: str, encoding: str = "utf-8", chunk_size: int = 65535) -> str:
     """Read whole text file and return as string.
 
@@ -67,6 +73,7 @@ def read_text(fs: SupportsReadChunks, path: str, encoding: str = "utf-8", chunk_
     return read_bytes(fs, path, chunk_size).decode(encoding)
 
 
+@export
 def write_text(fs: SupportsWriteChunks, path: str, data: str, encoding: str = "utf-8", chunk_size: int = 65535):
     """Create new text file or replace existing with given text data.
 
@@ -76,6 +83,7 @@ def write_text(fs: SupportsWriteChunks, path: str, data: str, encoding: str = "u
     return write_bytes(fs, path, data.encode(encoding), chunk_size)
 
 
+@export
 async def async_read_bytes(fs: SupportsAsyncReadChunks, path: str, chunk_size: int = 65535) -> bytes:
     """Same as :func:`read_bytes`, but for async code."""
     out = b""
@@ -84,6 +92,7 @@ async def async_read_bytes(fs: SupportsAsyncReadChunks, path: str, chunk_size: i
     return out
 
 
+@export
 async def async_write_bytes(fs: SupportsAsyncWriteChunks, path: str, data: bytes, chunk_size: int = 65535):
     """Same as :func:`write_bytes`, but for async code."""
 
@@ -99,6 +108,7 @@ async def async_write_bytes(fs: SupportsAsyncWriteChunks, path: str, data: bytes
     await fs.write_chunks(path, gen())
 
 
+@export
 async def async_read_text(
     fs: SupportsAsyncReadChunks, path: str, encoding: str = "utf-8", chunk_size: int = 65535
 ) -> str:
@@ -106,8 +116,9 @@ async def async_read_text(
     return (await async_read_bytes(fs, path, chunk_size)).decode(encoding)
 
 
+@export
 async def async_write_text(
     fs: SupportsAsyncWriteChunks, path: str, data: str, encoding: str = "utf-8", chunk_size: int = 65535
-) -> str:
+):
     """Same as :func:`write_text`, but for async code."""
     await async_write_bytes(fs, path, data.encode(encoding), chunk_size)

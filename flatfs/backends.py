@@ -8,9 +8,12 @@ from typing import AsyncGenerator, AsyncIterable, Generator, Iterable, Iterator,
 from flatfs.exc import PathAccessError, PathNotFoundError
 from flatfs.interface import FlatFsReaderWriter
 
-from . import _utils
+from . import _utils, _export
+
+__all__ = export = _export.Export()  # type: ignore
 
 
+@export
 class LocalFlatFs:
     """FlatFS implementation using local filesystem to store files.
 
@@ -106,6 +109,7 @@ class LocalFlatFs:
         abspath.unlink()
 
 
+@export
 class InMemoryFlatFs:
     """In-memory FlatFS implementation.
 
@@ -146,6 +150,7 @@ class InMemoryFlatFs:
         del self.__storage[key]
 
 
+@export
 class AsyncFlatFsAdapter:
     """Adapter that wraps given :class:`flatfs.interface.FlatFsReaderWriter`
     with async interface.

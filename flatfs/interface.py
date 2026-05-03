@@ -1,6 +1,11 @@
 from typing import AsyncGenerator, AsyncIterable, Iterable, Iterator, Protocol
 
+from . import _export
 
+__all__ = export = _export.Export()  # type: ignore
+
+
+@export
 class SupportsReadChunks(Protocol):
     """Protocol for objects that support chunked reading."""
 
@@ -24,6 +29,7 @@ class SupportsReadChunks(Protocol):
         ...
 
 
+@export
 class SupportsWriteChunks(Protocol):
     """Protocol for object that support writing in chunks."""
 
@@ -40,6 +46,7 @@ class SupportsWriteChunks(Protocol):
         ...
 
 
+@export
 class FlatFsReader(SupportsReadChunks, Protocol):
     """Read-only interface to access files in the flat filesystem."""
 
@@ -56,6 +63,7 @@ class FlatFsReader(SupportsReadChunks, Protocol):
         ...
 
 
+@export
 class FlatFsReaderWriter(FlatFsReader, SupportsWriteChunks, Protocol):
     """Read-write interface to access files in the flat filesystem."""
 
@@ -71,6 +79,7 @@ class FlatFsReaderWriter(FlatFsReader, SupportsWriteChunks, Protocol):
         ...
 
 
+@export
 class SupportsAsyncReadChunks(Protocol):
 
     def read_chunks(self, path: str, chunk_size: int = 65535) -> AsyncGenerator[bytes, None]:
@@ -93,6 +102,7 @@ class SupportsAsyncReadChunks(Protocol):
         ...
 
 
+@export
 class SupportsAsyncWriteChunks(Protocol):
 
     async def write_chunks(self, path: str, chunks: AsyncIterable[bytes]):
@@ -108,6 +118,7 @@ class SupportsAsyncWriteChunks(Protocol):
         ...
 
 
+@export
 class AsyncFlatFsReader(SupportsAsyncReadChunks, Protocol):
     """Async read-only interface to access files in the flat filesystem."""
 
@@ -124,6 +135,7 @@ class AsyncFlatFsReader(SupportsAsyncReadChunks, Protocol):
         ...
 
 
+@export
 class AsyncFlatFsReaderWriter(AsyncFlatFsReader, SupportsAsyncWriteChunks, Protocol):
     """Async read-write interface to access files in the flat filesystem."""
 

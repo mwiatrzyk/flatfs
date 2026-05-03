@@ -1,6 +1,11 @@
 from typing import Optional
 
+from . import _export
 
+__all__ = export = _export.Export()  # type: ignore
+
+
+@export
 class FlatFsError(Exception):
     """Base class for exceptions raised by this library."""
 
@@ -13,6 +18,7 @@ class FlatFsError(Exception):
         return self.__message_template__.format(self=self)
 
 
+@export
 class PathError(FlatFsError):
     """Base class for path-related errors."""
 
@@ -26,9 +32,11 @@ class PathError(FlatFsError):
         self.path = path
 
 
+@export
 class PathNotFoundError(PathError):
     """Raised when file was not found."""
 
 
+@export
 class PathAccessError(PathError):
     """Raised when file that is tried to be accessed lays beyond filesystem bounds."""
