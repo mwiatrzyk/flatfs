@@ -3,7 +3,14 @@ import fnmatch
 import os
 import pathlib
 from queue import Queue
-from typing import AsyncGenerator, AsyncIterable, Generator, Iterable, Iterator, Optional
+from typing import (
+    AsyncGenerator,
+    AsyncIterable,
+    Generator,
+    Iterable,
+    Iterator,
+    Optional,
+)
 
 from flatfs.exc import PathAccessError, PathNotFoundError
 from flatfs.interface import FlatFsReaderWriter
@@ -43,7 +50,12 @@ class LocalFlatFs:
         used underneath.
     """
 
-    def __init__(self, root_dir: pathlib.Path, exclude: Optional[set[str]] = None, include: Optional[set[str]] = None):
+    def __init__(
+        self,
+        root_dir: pathlib.Path,
+        exclude: Optional[set[str]] = None,
+        include: Optional[set[str]] = None,
+    ):
         self.__root_dir = root_dir
         self.__exclude = exclude or set()
         self.__include = include or set()

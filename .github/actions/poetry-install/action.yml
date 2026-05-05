@@ -1,0 +1,30 @@
+name: Poetry Install
+description: Install Python deps with Poetry and cache them
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - run: pip install poetry
+      shell: bash
+
+    - run: poetry config virtualenvs.in-project true
+      shell: bash
+
+    - uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/pypoetry
+          ~/.cache/pip
+          .venv
+        key: poetry-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles('poetry.lock') }}
+
+    - run: poetry install --no-interaction
+      shell: bash
+
+inputs:
+  python-version:
+    required: true

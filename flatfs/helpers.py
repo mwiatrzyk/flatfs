@@ -1,5 +1,10 @@
 from . import _export
-from .interface import SupportsAsyncReadChunks, SupportsAsyncWriteChunks, SupportsReadChunks, SupportsWriteChunks
+from .interface import (
+    SupportsAsyncReadChunks,
+    SupportsAsyncWriteChunks,
+    SupportsReadChunks,
+    SupportsWriteChunks,
+)
 
 __all__ = export = _export.Export()  # type: ignore
 
@@ -74,7 +79,13 @@ def read_text(fs: SupportsReadChunks, path: str, encoding: str = "utf-8", chunk_
 
 
 @export
-def write_text(fs: SupportsWriteChunks, path: str, data: str, encoding: str = "utf-8", chunk_size: int = 65535):
+def write_text(
+    fs: SupportsWriteChunks,
+    path: str,
+    data: str,
+    encoding: str = "utf-8",
+    chunk_size: int = 65535,
+):
     """Create new text file or replace existing with given text data.
 
     Uses :func:`write_bytes` underneath and just encodes given *data* with
@@ -110,7 +121,10 @@ async def async_write_bytes(fs: SupportsAsyncWriteChunks, path: str, data: bytes
 
 @export
 async def async_read_text(
-    fs: SupportsAsyncReadChunks, path: str, encoding: str = "utf-8", chunk_size: int = 65535
+    fs: SupportsAsyncReadChunks,
+    path: str,
+    encoding: str = "utf-8",
+    chunk_size: int = 65535,
 ) -> str:
     """Same as :func:`read_text`, but for async code."""
     return (await async_read_bytes(fs, path, chunk_size)).decode(encoding)
@@ -118,7 +132,11 @@ async def async_read_text(
 
 @export
 async def async_write_text(
-    fs: SupportsAsyncWriteChunks, path: str, data: str, encoding: str = "utf-8", chunk_size: int = 65535
+    fs: SupportsAsyncWriteChunks,
+    path: str,
+    data: str,
+    encoding: str = "utf-8",
+    chunk_size: int = 65535,
 ):
     """Same as :func:`write_text`, but for async code."""
     await async_write_bytes(fs, path, data.encode(encoding), chunk_size)
