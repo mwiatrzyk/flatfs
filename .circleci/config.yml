@@ -1,0 +1,90 @@
+version: 2.1
+
+commands:
+  configure-git:
+    steps:
+      - run: git config --global user.name "CI Bot"
+      - run: git config --global user.email "ci@noreply.circleci.com"
+
+  install-deps:
+    parameters:
+      python_version:
+        type: string
+    steps:
+      - run: pyenv local <<parameters.python_version>>
+      - restore_cache:
+          name: restore dependency cache
+          keys:
+            - poetry-py<<parameters.python_version>>-{{ checksum "poetry.lock" }}
+      - run: poetry config virtualenvs.in-project true
+      - run: poetry env use <<parameters.python_version>>
+      - run: poetry install -q
+      - save_cache:
+          name: save dependency cache
+          key: poetry-py<<parameters.python_version>>-{{ checksum "poetry.lock" }}
+          paths:
+            - ~/.cache/pypoetry/
+            - ~/.cache/pip/
+            - .venv
+
+jobs:
+  test:
+    docker:
+      - image: cimg/python:<<parameters.python_version>>
+    parameters:
+      python_version:
+        type: string
+    steps:
+      - checkout
+      - install-deps:
+          python_version: <<parameters.python_version>>
+      - run: poetry run inv check
+
+  bump:
+    docker:
+      - image: cimg/python:3.13
+    steps:
+      - checkout
+      - configure-git
+      - add_ssh_keys
+      - install-deps:
+          python_version: "3.13"
+      - run: poetry run inv bump
+      - run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git push origin $CIRCLE_BRANCH
+            git push --tags
+          fi
+
+  deploy:
+    docker:
+      - image: cimg/python:3.13
+    steps:
+      - checkout
+      - configure-git
+      - install-deps:
+          python_version: "3.13"
+      - run: poetry build
+      - run: poetry publish --username __token__ --password $PYPI_API_TOKEN
+
+workflows:
+  test-bump-deploy:
+    jobs:
+      - test:
+          matrix:
+            parameters:
+              python_version: ["3.10", "3.11", "3.12", "3.13"]
+      - bump:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - deploy:
+          requires:
+            - bump
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*$/
