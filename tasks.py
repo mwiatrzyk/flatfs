@@ -1,15 +1,11 @@
-import sys
-
 from invoke.tasks import task
 from invoke.context import Context
-
-_py_ver = sys.version_info
 
 
 @task
 def format(ctx: Context):
     """Format code using Black."""
-    ctx.run(f"black . --line-length=120 --target-version=py{_py_ver.major}{_py_ver.minor}")
+    ctx.run("ruff format --line-length=120")
 
 
 @task
@@ -19,6 +15,17 @@ def coverage(ctx: Context):
 
 
 @task
+def lint(ctx: Context):
+    """Run static code analyzer."""
+    ctx.run("ruff check --exclude api.py")
+
+
+@task
+def test(ctx: Context):
+    """Run all tests."""
+    ctx.run("pytest")
+
+
+@task(lint, test)
 def check(ctx: Context):
     """Run all checks."""
-    ctx.run("pytest")
