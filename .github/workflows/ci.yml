@@ -10,7 +10,7 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: ./.github/actions/poetry-install
       with:
         python-version: ${{ matrix.python-version }}
@@ -23,14 +23,14 @@ jobs:
     runs-on: ubuntu-slim
     if: github.ref == 'refs/heads/feat/github-actions' && success() # FIXME: replace with `main`
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python-version }}
       uses: ./.github/actions/poetry-install
       with:
         python-version: 3.13
     - name: Perform version bump
       run: |
-        poetry run bumpify -n bump
+        poetry run inv bump
     - name: Push tags to repository
       run: |
-        echo "Push tags"
+        git push --tags
