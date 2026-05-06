@@ -1,9 +1,9 @@
 [project]
 name = "flatfs"
 version = "0.0.0"
-description = "A minimal filesystem abstraction that treats file paths as keys and file contents as values, with pluggable backends (local, in-memory)."
+description = "Minimal filesystem abstraction with pluggable backends, treating paths as keys and file contents as values."
 authors = [
-    {name = "Maciej Wiatrzyk",email = "maciej.wiatrzyk@gmail.com"}
+    {name = "Maciej Wiatrzyk", email = "maciej.wiatrzyk@gmail.com"}
 ]
 license = {text = "MIT"}
 readme = "README.md"
@@ -18,8 +18,9 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.0.3"
-black = "^26.3.1"
 invoke = "^3.0.3"
 pytest-asyncio = "^1.3.0"
 mockify = "^0.14.0"
 pytest-cov = "^7.1.0"
+ruff = "^0.15.12"
+bumpify = "^0.5.1"

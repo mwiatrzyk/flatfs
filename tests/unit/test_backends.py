@@ -10,7 +10,6 @@ from flatfs.interface import FlatFsReaderWriter
 
 
 class TestLocalFlatFs:
-
     @pytest.fixture
     def exclude(self):
         return None
@@ -20,7 +19,12 @@ class TestLocalFlatFs:
         return None
 
     @pytest.fixture
-    def uut(self, tmp_path: pathlib.Path, exclude: Optional[set[str]], include: Optional[set[str]]):
+    def uut(
+        self,
+        tmp_path: pathlib.Path,
+        exclude: Optional[set[str]],
+        include: Optional[set[str]],
+    ):
         return LocalFlatFs(tmp_path, exclude=exclude, include=include)
 
     @pytest.fixture(
