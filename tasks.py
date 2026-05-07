@@ -22,3 +22,9 @@ def coverage(ctx: Context):
 def check(ctx: Context):
     """Run all checks."""
     ctx.run("pytest")
+
+
+@task
+def clean(ctx: Context):
+    """Clean project from all .pyc and other generated files."""
+    ctx.run("git clean -xdf")
