@@ -55,13 +55,65 @@ files = [
 ]
 
 [[package]]
+name = "bumpify"
+version = "0.5.1"
+description = "Semantic versioning automation tool for software projects"
+optional = false
+python-versions = "<4.0,>=3.9"
+groups = ["dev"]
+files = [
+    {file = "bumpify-0.5.1-py3-none-any.whl", hash = "sha256:ba2407886d1070d44131723cf3f19d075e908fdebb030f04c527cda40811a0f2"},
+    {file = "bumpify-0.5.1.tar.gz", hash = "sha256:0bf2a3811572fedeaa2c7cc30d907dfd0ed53a3f4f0f884ed9622126c3f44580"},
+]
+
+[package.dependencies]
+click = ">=8.1.7,<9.0.0"
+click-help-colors = ">=0.9.4,<0.10.0"
+colorama = ">=0.4.6,<0.5.0"
+modelity = ">=0.26.0,<0.27.0"
+pydio = ">=0.4.1,<0.5.0"
+tomlkit = ">=0.12.4,<0.13.0"
+
+[[package]]
+name = "click"
+version = "8.3.3"
+description = "Composable command line interface toolkit"
+optional = false
+python-versions = ">=3.10"
+groups = ["dev"]
+files = [
+    {file = "click-8.3.3-py3-none-any.whl", hash = "sha256:a2bf429bb3033c89fa4936ffb35d5cb471e3719e1f3c8a7c3fff0b8314305613"},
+    {file = "click-8.3.3.tar.gz", hash = "sha256:398329ad4837b2ff7cbe1dd166a4c0f8900c3ca3a218de04466f38f6497f18a2"},
+]
+
+[package.dependencies]
+colorama = {version = "*", markers = "platform_system == \"Windows\""}
+
+[[package]]
+name = "click-help-colors"
+version = "0.9.4"
+description = "Colorization of help messages in Click"
+optional = false
+python-versions = "*"
+groups = ["dev"]
+files = [
+    {file = "click-help-colors-0.9.4.tar.gz", hash = "sha256:f4cabe52cf550299b8888f4f2ee4c5f359ac27e33bcfe4d61db47785a5cc936c"},
+    {file = "click_help_colors-0.9.4-py3-none-any.whl", hash = "sha256:b33c5803eeaeb084393b1ab5899dc5476c7196b87a18713045afe76f840b42db"},
+]
+
+[package.dependencies]
+click = ">=7.0,<9"
+
+[package.extras]
+dev = ["mypy", "pytest"]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 groups = ["dev"]
-markers = "sys_platform == \"win32\""
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
@@ -346,6 +398,21 @@ files = [
 ]
 
 [[package]]
+name = "modelity"
+version = "0.26.0"
+description = "Data parsing and validation library for Python"
+optional = false
+python-versions = "<4,>=3.9"
+groups = ["dev"]
+files = [
+    {file = "modelity-0.26.0-py3-none-any.whl", hash = "sha256:b14ac50d6c13a867b84d88734a0446c53b3d21507b62657559626ce445249a72"},
+    {file = "modelity-0.26.0.tar.gz", hash = "sha256:757b37ec8370a18a21971cd35ed94b82c21fb46a357adcb01575db7924e013c7"},
+]
+
+[package.dependencies]
+typing-extensions = ">=4.12.2,<5.0.0"
+
+[[package]]
 name = "mypy"
 version = "2.0.0"
 description = "Optional static typing for Python"
@@ -473,6 +540,18 @@ files = [
 [package.extras]
 dev = ["pre-commit", "tox"]
 testing = ["coverage", "pytest", "pytest-benchmark"]
+
+[[package]]
+name = "pydio"
+version = "0.4.1"
+description = "Simple and functional dependency injection toolkit for Python"
+optional = false
+python-versions = ">=3.7.2,<4"
+groups = ["dev"]
+files = [
+    {file = "pydio-0.4.1-py3-none-any.whl", hash = "sha256:8af3df9804feaefe6e540aebb11b5f83ca8e32eba7babf52c32a88963932df16"},
+    {file = "pydio-0.4.1.tar.gz", hash = "sha256:3034a3d3227acf121af8dedccb638baf0970dc6383a71d90e74daa7697e9a96b"},
+]
 
 [[package]]
 name = "pygments"
@@ -641,6 +720,18 @@ files = [
 ]
 
 [[package]]
+name = "tomlkit"
+version = "0.12.5"
+description = "Style preserving TOML library"
+optional = false
+python-versions = ">=3.7"
+groups = ["dev"]
+files = [
+    {file = "tomlkit-0.12.5-py3-none-any.whl", hash = "sha256:af914f5a9c59ed9d0762c7b64d3b5d5df007448eb9cd2edc8a46b1eafead172f"},
+    {file = "tomlkit-0.12.5.tar.gz", hash = "sha256:eef34fba39834d4d6b73c9ba7f3e4d1c417a4e56f89a7e96e090dd0d24b8fb3c"},
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.15.0"
 description = "Backported and Experimental Type Hints for Python 3.9+"
@@ -655,4 +746,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4"
-content-hash = "3307552bfcaf1fcd4ac47c068df3872163dddaecbe7de3bed5636ba98be6dd23"
+content-hash = "643702f8d28ee83303041e8e45fc789d9942d34f15be5168f55c830a444bbfb7"
