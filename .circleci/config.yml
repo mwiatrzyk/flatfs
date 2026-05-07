@@ -27,7 +27,27 @@ commands:
             - ~/.cache/pip/
             - .venv
 
+  save-sha:
+    steps:
+      - run: echo $CIRCLE_SHA1 > .sha1
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .sha1
+
+  load-sha:
+    steps:
+      - attach_workspace:
+          at: .
+      - run: git checkout $(cat .sha1)
+
 jobs:
+  prepare:
+    docker:
+      - image: cimg/python:3.13
+    steps:
+      - save-sha
+
   test:
     docker:
       - image: cimg/python:<<parameters.python_version>>
@@ -36,6 +56,7 @@ jobs:
         type: string
     steps:
       - checkout
+      - load-sha
       - install-deps:
           python_version: <<parameters.python_version>>
       - run: poetry run inv check
@@ -45,6 +66,7 @@ jobs:
       - image: cimg/python:3.13
     steps:
       - checkout
+      - load-sha
       - configure-git
       - add_ssh_keys
       - install-deps:
@@ -55,12 +77,14 @@ jobs:
             git push origin $CIRCLE_BRANCH
             git push --tags
           fi
+      - save-sha
 
   deploy:
     docker:
       - image: cimg/python:3.13
     steps:
       - checkout
+      - load-sha
       - configure-git
       - install-deps:
           python_version: "3.13"
@@ -70,6 +94,7 @@ jobs:
 workflows:
   test-bump-deploy:
     jobs:
+      - prepare
       - test:
           matrix:
             parameters:
@@ -81,8 +106,6 @@ workflows:
             branches:
               only: feat/circleci  # TODO: change to `main`
       - deploy:
-          requires:
-            - bump
           filters:
             branches:
               ignore: /.*/
