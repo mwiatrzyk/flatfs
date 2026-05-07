@@ -79,7 +79,7 @@ workflows:
             - test
           filters:
             branches:
-              only: main
+              only: feat/circleci  # TODO: change to `main`
       - deploy:
           requires:
             - bump
