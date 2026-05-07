@@ -7,10 +7,21 @@ authors = [
 ]
 license = {text = "MIT"}
 readme = "README.md"
+keywords = ["flat", "filesystem", "abstraction", "library"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    #"Development Status :: 5 - Production/Stable"  <- Use this for first 1.x version
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries",
+]
 requires-python = ">=3.10,<4"
 dependencies = [
 ]
 
+[project.urls]
+repository = "https://github.com/mwiatrzyk/flatfs"
+"Bug Tracker" = "https://github.com/mwiatrzyk/flatfs/issues"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
