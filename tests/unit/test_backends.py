@@ -10,7 +10,6 @@ from flatfs.interface import FlatFsReaderWriter
 
 
 class TestLocalFlatFs:
-
     @pytest.fixture
     def exclude(self):
         return None
