@@ -54,3 +54,9 @@ def check(ctx: Context):
 def clean(ctx: Context):
     """Clean project from all .pyc and other generated files."""
     ctx.run("git clean -xdf")
+
+
+@task
+def bump(ctx: Context):
+    """Bump project version."""
+    ctx.run("bumpify bump")
