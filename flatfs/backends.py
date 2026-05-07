@@ -117,7 +117,7 @@ class InMemoryFlatFs:
     disk usage.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__storage: dict[str, bytes] = {}
 
     def __make_key(self, path: str) -> str:
@@ -176,7 +176,7 @@ class AsyncFlatFsAdapter:
 
         loop = asyncio.get_running_loop()
         asyncio.create_task(_utils.run_blocking(scanner))
-        queue = asyncio.Queue()
+        queue: asyncio.Queue[str] = asyncio.Queue()
         while True:
             path = await queue.get()
             if not path:
@@ -197,7 +197,7 @@ class AsyncFlatFsAdapter:
                 loop.call_soon_threadsafe(queue.put_nowait, e)
 
         loop = asyncio.get_running_loop()
-        queue = asyncio.Queue()
+        queue: asyncio.Queue[bytes | Exception] = asyncio.Queue()
         asyncio.create_task(_utils.run_blocking(reader))
         while True:
             chunk_or_exc = await queue.get()
@@ -216,7 +216,7 @@ class AsyncFlatFsAdapter:
                     return
                 yield chunk
 
-        queue = Queue()
+        queue: Queue[bytes] = Queue()
         task = asyncio.create_task(_utils.run_blocking(self.__target.write_chunks, path, gen()))
         async for chunk in chunks:
             queue.put(chunk)

@@ -17,7 +17,7 @@ def normalize_path(path: str) -> str:
     :param path:
         The path to normalize.
     """
-    parts = []
+    parts: list[str] = []
     for part in path.split("/"):
         if not part or part == ".":
             continue
