@@ -29,9 +29,11 @@ def read_bytes(fs: SupportsReadChunks, path: str, chunk_size: int = 65535) -> by
 
 
 @export
-def write_bytes(fs: SupportsWriteChunks, path: str, data: bytes, chunk_size: int = 65535):
+def write_bytes(fs: SupportsWriteChunks, path: str, data: bytes, chunk_size: int = 65535) -> int:
     """Write given data to file at given path either creating the file, or
     replacing with new content.
+
+    Returns the number of bytes written.
 
     :param fs:
         FlatFS object to write to.
@@ -60,7 +62,7 @@ def write_bytes(fs: SupportsWriteChunks, path: str, data: bytes, chunk_size: int
             data_left = data_left[chunk_size:]
             yield chunk
 
-    fs.write_chunks(path, gen())
+    return fs.write_chunks(path, gen())
 
 
 @export
@@ -93,7 +95,7 @@ async def async_read_bytes(fs: SupportsAsyncReadChunks, path: str, chunk_size: i
 
 
 @export
-async def async_write_bytes(fs: SupportsAsyncWriteChunks, path: str, data: bytes, chunk_size: int = 65535):
+async def async_write_bytes(fs: SupportsAsyncWriteChunks, path: str, data: bytes, chunk_size: int = 65535) -> int:
     """Same as :func:`write_bytes`, but for async code."""
 
     async def gen():
@@ -105,7 +107,7 @@ async def async_write_bytes(fs: SupportsAsyncWriteChunks, path: str, data: bytes
             data_left = data_left[chunk_size:]
             yield chunk
 
-    await fs.write_chunks(path, gen())
+    return await fs.write_chunks(path, gen())
 
 
 @export

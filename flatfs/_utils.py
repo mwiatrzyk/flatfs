@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import functools
 from typing import Callable, TypeVar
 
@@ -50,3 +51,8 @@ async def run_blocking(func: Callable[..., T], *args, **kwargs) -> T:
     """
     wrapped_func = functools.partial(func, *args, **kwargs)
     return await asyncio.get_running_loop().run_in_executor(None, wrapped_func)
+
+
+def utcnow() -> datetime.datetime:
+    """Get the current date and time in UTC."""
+    return datetime.datetime.now(datetime.timezone.utc)
