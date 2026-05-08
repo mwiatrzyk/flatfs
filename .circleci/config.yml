@@ -27,30 +27,7 @@ commands:
             - ~/.cache/pip/
             - .venv
 
-  save-sha:
-    steps:
-      - run: git rev-parse HEAD > .sha1
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .sha1
-
-  load-sha:
-    steps:
-      - attach_workspace:
-          at: .
-      - run: |
-          git fetch --all --tags
-          git checkout $(cat .sha1)
-
 jobs:
-  prepare:
-    docker:
-      - image: cimg/python:3.13
-    steps:
-      - checkout
-      - save-sha
-
   test:
     docker:
       - image: cimg/python:<<parameters.python_version>>
@@ -59,7 +36,6 @@ jobs:
         type: string
     steps:
       - checkout
-      - load-sha
       - install-deps:
           python_version: <<parameters.python_version>>
       - run: poetry run inv check
@@ -69,25 +45,20 @@ jobs:
       - image: cimg/python:3.13
     steps:
       - checkout
-      - load-sha
       - configure-git
       - add_ssh_keys
       - install-deps:
           python_version: "3.13"
       - run: poetry run inv bump
       - run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            git push origin $CIRCLE_BRANCH
-            git push --tags
-          fi
-      - save-sha
+          git push origin $CIRCLE_BRANCH
+          git push --tags
 
   deploy:
     docker:
       - image: cimg/python:3.13
     steps:
       - checkout
-      - load-sha
       - configure-git
       - install-deps:
           python_version: "3.13"
@@ -97,10 +68,7 @@ jobs:
 workflows:
   test-bump-deploy:
     jobs:
-      - prepare
       - test:
-          requires:
-            - prepare
           matrix:
             parameters:
               python_version: ["3.10", "3.11", "3.12", "3.13"]
@@ -111,6 +79,8 @@ workflows:
             branches:
               only: feat/circleci  # TODO: change to `main`
       - deploy:
+          requires:
+            - test
           filters:
             branches:
               ignore: /.*/
