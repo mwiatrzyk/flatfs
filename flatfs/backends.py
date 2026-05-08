@@ -1,4 +1,6 @@
 import asyncio
+import dataclasses
+import datetime
 import fnmatch
 import os
 import pathlib
@@ -6,7 +8,7 @@ from queue import Queue
 from typing import AsyncGenerator, AsyncIterable, Generator, Iterable, Iterator, Optional
 
 from flatfs.exc import PathAccessError, PathNotFoundError
-from flatfs.interface import FlatFsReaderWriter
+from flatfs.interface import FlatFsReaderWriter, Stat
 
 from . import _utils, _export
 
@@ -80,6 +82,14 @@ class LocalFlatFs:
     def scan(self) -> Iterator[str]:
         return self.__walk(self.__root_dir, "")
 
+    def stat(self, path: str) -> Stat:
+        abspath = self.__make_abspath(path)
+        stat_result = abspath.stat()
+        return Stat(
+            modified=datetime.datetime.fromtimestamp(stat_result.st_mtime, datetime.timezone.utc),
+            size=stat_result.st_size,
+        )
+
     def exists(self, path: str) -> bool:
         abspath = self.__make_abspath(path)
         return abspath.is_file()
@@ -95,12 +105,14 @@ class LocalFlatFs:
                     break
                 yield chunk
 
-    def write_chunks(self, path: str, chunks: Iterable[bytes]):
+    def write_chunks(self, path: str, chunks: Iterable[bytes]) -> int:
         abspath = self.__make_abspath(path)
         abspath.parent.mkdir(parents=True, exist_ok=True)
+        total_bytes = 0
         with abspath.open("wb") as fd:
             for chunk in chunks:
-                fd.write(chunk)
+                total_bytes += fd.write(chunk)
+        return total_bytes
 
     def remove(self, path: str):
         abspath = self.__make_abspath(path)
@@ -117,8 +129,13 @@ class InMemoryFlatFs:
     disk usage.
     """
 
+    @dataclasses.dataclass
+    class _File:
+        payload: bytes
+        stat: Stat
+
     def __init__(self) -> None:
-        self.__storage: dict[str, bytes] = {}
+        self.__storage: dict[str, InMemoryFlatFs._File] = {}
 
     def __make_key(self, path: str) -> str:
         normalized_key = _utils.normalize_path(path)
@@ -127,6 +144,10 @@ class InMemoryFlatFs:
     def scan(self) -> Iterator[str]:
         return iter(self.__storage.keys())
 
+    def stat(self, path: str) -> Stat:
+        key = self.__make_key(path)
+        return self.__storage[key].stat
+
     def exists(self, path: str) -> bool:
         return self.__make_key(path) in self.__storage
 
@@ -134,14 +155,21 @@ class InMemoryFlatFs:
         key = self.__make_key(path)
         if key not in self.__storage:
             raise PathNotFoundError(path)
-        data_left = self.__storage[key]
+        data_left = self.__storage[key].payload
         while len(data_left) > 0:
             chunk = data_left[:chunk_size]
             data_left = data_left[chunk_size:]
             yield chunk
 
-    def write_chunks(self, path: str, chunks: Iterable[bytes]):
-        self.__storage[self.__make_key(path)] = b"".join(chunks)
+    def write_chunks(self, path: str, chunks: Iterable[bytes]) -> int:
+        payload = b"".join(chunks)
+        now = _utils.utcnow()
+        stat = Stat(
+            modified=now,
+            size=len(payload),
+        )
+        self.__storage[self.__make_key(path)] = self._File(payload, stat)
+        return stat.size
 
     def remove(self, path: str):
         key = self.__make_key(path)
@@ -186,6 +214,9 @@ class AsyncFlatFsAdapter:
     async def exists(self, path: str) -> bool:
         return await _utils.run_blocking(self.__target.exists, path)
 
+    async def stat(self, path: str) -> Stat:
+        return await _utils.run_blocking(self.__target.stat, path)
+
     async def read_chunks(self, path: str, chunk_size: int = 65535) -> AsyncGenerator[bytes, None]:
 
         def reader():
@@ -207,7 +238,7 @@ class AsyncFlatFsAdapter:
                 raise chunk_or_exc
             yield chunk_or_exc
 
-    async def write_chunks(self, path: str, chunks: AsyncIterable[bytes]):
+    async def write_chunks(self, path: str, chunks: AsyncIterable[bytes]) -> int:
 
         def gen() -> Generator[bytes, None, None]:
             while True:
@@ -221,7 +252,7 @@ class AsyncFlatFsAdapter:
         async for chunk in chunks:
             queue.put(chunk)
         queue.put(b"")
-        await task
+        return await task
 
     async def remove(self, path: str):
         await _utils.run_blocking(self.__target.remove, path)

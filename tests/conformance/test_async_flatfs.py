@@ -1,8 +1,10 @@
+import asyncio
 import pathlib
 from typing import Callable
 
 import pytest
 
+from flatfs import _utils
 from flatfs.api import (
     AsyncFlatFsAdapter,
     InMemoryFlatFs,
@@ -68,6 +70,25 @@ def normalized_path(path_normalized_path: tuple):
 async def test_binary_file_and_read_it_back(uut: UUT, path: str, data: bytes):
     await async_write_bytes(uut, path, data)
     assert await async_read_bytes(uut, path) == data
+
+
+async def test_write_bytes_and_read_stats_of_created_file(uut: UUT, path: str, data: bytes):
+    current_utc = _utils.utcnow()
+    await async_write_bytes(uut, path, data)
+    stat = await uut.stat(path)
+    assert stat.size == len(data)
+    assert abs(stat.modified - current_utc).total_seconds() <= 1
+
+
+async def test_stats_change_when_file_is_overwritten(uut: UUT, path: str):
+    initial_count = await async_write_bytes(uut, path, b"initial content")
+    initial_stat = await uut.stat(path)
+    assert initial_stat.size == initial_count
+    await asyncio.sleep(0.025)  # Let's wait a bit...
+    modified_count = await async_write_bytes(uut, path, b"modified content")
+    modified_stat = await uut.stat(path)
+    assert modified_stat.size == modified_count
+    assert initial_stat != modified_stat
 
 
 async def test_text_file_and_read_it_back(uut: UUT, path: str):

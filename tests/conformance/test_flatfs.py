@@ -1,8 +1,10 @@
 import pathlib
+import time
 from typing import Callable
 
 import pytest
 
+from flatfs import _utils
 from flatfs.api import (
     InMemoryFlatFs,
     LocalFlatFs,
@@ -67,6 +69,25 @@ def normalized_path(path_normalized_path: tuple):
 def test_write_bytes_and_read_bytes_back(uut: UUT, path: str, data: bytes):
     write_bytes(uut, path, data)
     assert read_bytes(uut, path) == data
+
+
+def test_write_bytes_and_read_stats_of_created_file(uut: UUT, path: str, data: bytes):
+    current_utc = _utils.utcnow()
+    write_bytes(uut, path, data)
+    stat = uut.stat(path)
+    assert stat.size == len(data)
+    assert abs(stat.modified - current_utc).total_seconds() <= 1
+
+
+def test_stats_change_when_file_is_overwritten(uut: UUT, path: str):
+    initial_count = write_bytes(uut, path, b"initial content")
+    initial_stat = uut.stat(path)
+    assert initial_stat.size == initial_count
+    time.sleep(0.025)  # Let's wait a bit...
+    modified_count = write_bytes(uut, path, b"modified content")
+    modified_stat = uut.stat(path)
+    assert modified_stat.size == modified_count
+    assert initial_stat != modified_stat
 
 
 def test_text_file_and_read_it_back(uut: UUT, path: str):
