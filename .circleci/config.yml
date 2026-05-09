@@ -77,7 +77,7 @@ workflows:
             - test
           filters:
             branches:
-              only: feat/circleci  # TODO: change to `main`
+              only: main
   release:
     jobs:
       - test:
