@@ -130,7 +130,7 @@ async def async_write_text(
 class BinaryReader:
     """Helper for reading bytes from a file."""
 
-    def __init__(self, fs: SupportsReadChunks, path: str, chunk_size: int=65535):
+    def __init__(self, fs: SupportsReadChunks, path: str, chunk_size: int = 65535):
         self.__chunk_gen = fs.read_chunks(path, chunk_size)
         self.__current_chunk = b""
 
