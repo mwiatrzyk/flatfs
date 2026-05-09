@@ -124,3 +124,35 @@ async def async_write_text(
 ):
     """Same as :func:`write_text`, but for async code."""
     await async_write_bytes(fs, path, data.encode(encoding), chunk_size)
+
+
+@export
+class BinaryReader:
+    """Helper for reading bytes from a file."""
+
+    def __init__(self, fs: SupportsReadChunks, path: str, chunk_size: int=65535):
+        self.__chunk_gen = fs.read_chunks(path, chunk_size)
+        self.__current_chunk = b""
+
+    def read(self, count: int) -> bytes:
+        """Read at most *count* bytes from an open file.
+
+        :param count:
+            The maximum number of bytes to read.
+        """
+        if not self.__current_chunk:
+            self.__current_chunk = next(self.__chunk_gen, b"")
+        fragment = self.__current_chunk[:count]
+        self.__current_chunk = self.__current_chunk[count:]
+        return fragment
+
+    def close(self):
+        """Close this reader.
+
+        This also closes the underlying file that is opened by flat filesystem
+        object given in the constructor.
+
+        This method is idempotent.
+        """
+        self.__current_chunk = b""
+        self.__chunk_gen.close()
