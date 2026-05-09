@@ -131,13 +131,19 @@ async def test_scan_returns_normalized_path_to_existing_file(uut: UUT, path: str
     assert list([x async for x in uut.scan()]) == [normalized_path]
 
 
-async def test_read_chunks_raises_path_not_found_if_files_does_not_exist(uut: UUT, path: str):
+async def test_stat_raises_path_not_found_if_file_does_not_exist(uut: UUT, path: str):
+    with pytest.raises(PathNotFoundError) as excinfo:
+        await uut.stat(path)
+    assert excinfo.value.path == path
+
+
+async def test_read_chunks_raises_path_not_found_if_file_does_not_exist(uut: UUT, path: str):
     with pytest.raises(PathNotFoundError) as excinfo:
         _ = list([x async for x in uut.read_chunks(path)])
     assert excinfo.value.path == path
 
 
-async def test_remove_raises_path_not_found_if_files_does_not_exist(uut: UUT, path: str):
+async def test_remove_raises_path_not_found_if_file_does_not_exist(uut: UUT, path: str):
     with pytest.raises(PathNotFoundError) as excinfo:
         await uut.remove(path)
     assert excinfo.value.path == path
