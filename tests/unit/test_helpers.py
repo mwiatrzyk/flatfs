@@ -69,7 +69,6 @@ async def test_async_write_bytes(fs, path, chunk_size, data, expected_chunks):
 
 
 class TestBinaryReader:
-
     def test_read_whole_file_with_one_chunk_read(self, fs):
         chunks_read = [b"foo bar baz"]
         fs.read_chunks.expect_call("foo.txt", 65535).will_once(Iterate(chunks_read))
