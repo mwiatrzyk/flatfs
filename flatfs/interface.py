@@ -1,6 +1,6 @@
 import dataclasses
 import datetime
-from typing import AsyncGenerator, AsyncIterable, Iterable, Iterator, Protocol
+from typing import AsyncGenerator, AsyncIterable, Generator, Iterable, Iterator, Protocol
 
 from . import _export
 
@@ -23,7 +23,7 @@ class Stat:
 class SupportsReadChunks(Protocol):
     """Protocol for objects that support chunked reading."""
 
-    def read_chunks(self, path: str, chunk_size: int = 65535) -> Iterator[bytes]:
+    def read_chunks(self, path: str, chunk_size: int = 65535) -> Generator[bytes, None, None]:
         """Read file in chunks and return iterator yielding chunks.
 
         This method can be safely used with large files without the risk of

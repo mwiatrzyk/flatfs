@@ -84,6 +84,8 @@ class LocalFlatFs:
 
     def stat(self, path: str) -> Stat:
         abspath = self.__make_abspath(path)
+        if not abspath.is_file():
+            raise PathNotFoundError(path)
         stat_result = abspath.stat()
         return Stat(
             modified=datetime.datetime.fromtimestamp(stat_result.st_mtime, datetime.timezone.utc),
@@ -94,7 +96,7 @@ class LocalFlatFs:
         abspath = self.__make_abspath(path)
         return abspath.is_file()
 
-    def read_chunks(self, path: str, chunk_size: int = 65535) -> Iterator[bytes]:
+    def read_chunks(self, path: str, chunk_size: int = 65535) -> Generator[bytes, None, None]:
         abspath = self.__make_abspath(path)
         if not abspath.is_file():
             raise PathNotFoundError(path)
@@ -146,12 +148,14 @@ class InMemoryFlatFs:
 
     def stat(self, path: str) -> Stat:
         key = self.__make_key(path)
+        if key not in self.__storage:
+            raise PathNotFoundError(path)
         return self.__storage[key].stat
 
     def exists(self, path: str) -> bool:
         return self.__make_key(path) in self.__storage
 
-    def read_chunks(self, path: str, chunk_size: int = 65535) -> Iterator[bytes]:
+    def read_chunks(self, path: str, chunk_size: int = 65535) -> Generator[bytes, None, None]:
         key = self.__make_key(path)
         if key not in self.__storage:
             raise PathNotFoundError(path)
