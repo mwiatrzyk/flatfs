@@ -1,6 +1,6 @@
 import pytest
 
-from flatfs._utils import normalize_path
+from flatfs._utils import async_split_into_chunks, normalize_path, split_into_chunks
 from flatfs.exc import PathAccessError
 
 
@@ -32,3 +32,29 @@ def test_normalize_raises_access_error_if_resulting_path_goes_outside_of_filesys
     with pytest.raises(PathAccessError) as excinfo:
         normalize_path(path)
     assert excinfo.value.path == path
+
+
+@pytest.mark.parametrize(
+    "data, chunk_size, expected_chunks",
+    [
+        (b"foo", 1, [b"f", b"o", b"o"]),
+        (b"foo", 2, [b"fo", b"o"]),
+        (b"foo", 3, [b"foo"]),
+        (b"foo", 4, [b"foo"]),
+    ],
+)
+def test_split_into_chunks(data: bytes, chunk_size: int, expected_chunks: list[bytes]):
+    assert list(split_into_chunks(data, chunk_size)) == expected_chunks
+
+
+@pytest.mark.parametrize(
+    "data, chunk_size, expected_chunks",
+    [
+        (b"foo", 1, [b"f", b"o", b"o"]),
+        (b"foo", 2, [b"fo", b"o"]),
+        (b"foo", 3, [b"foo"]),
+        (b"foo", 4, [b"foo"]),
+    ],
+)
+async def test_async_split_into_chunks(data: bytes, chunk_size: int, expected_chunks: list[bytes]):
+    assert [chunk async for chunk in async_split_into_chunks(data, chunk_size)] == expected_chunks

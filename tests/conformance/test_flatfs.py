@@ -66,6 +66,16 @@ def normalized_path(path_normalized_path: tuple):
     return path_normalized_path[1]
 
 
+def test_write_chunks_yields_number_of_bytes_written_for_each_chunk(uut: UUT, path: str):
+
+    def chunk_gen():
+        yield b"foo"
+        yield b"spam"
+        yield b"more spam"
+
+    assert list(uut.write_chunks(path, chunk_gen())) == [3, 4, 9]
+
+
 def test_write_bytes_and_read_bytes_back(uut: UUT, path: str, data: bytes):
     write_bytes(uut, path, data)
     assert read_bytes(uut, path) == data
@@ -90,7 +100,7 @@ def test_stats_change_when_file_is_overwritten(uut: UUT, path: str):
     assert initial_stat != modified_stat
 
 
-def test_text_file_and_read_it_back(uut: UUT, path: str):
+def test_write_text_file_and_read_it_back(uut: UUT, path: str):
     write_text(uut, path, "some text")
     assert read_text(uut, path) == "some text"
 
@@ -100,11 +110,6 @@ def test_write_bytes_and_read_them_back_in_chunks(uut: UUT, path: str, data: byt
     chunks = list(uut.read_chunks(path, chunk_size=5))
     assert len(chunks) > 1
     assert b"".join(chunks) == data
-
-
-def test_create_file_from_chunks_and_read_it_back(uut: UUT, path: str, chunked_data: list[bytes]):
-    uut.write_chunks(path, chunked_data)
-    assert read_bytes(uut, path) == b"".join(chunked_data)
 
 
 def test_check_if_file_exists(uut: UUT, path: str, data: bytes):

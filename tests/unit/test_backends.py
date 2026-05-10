@@ -3,6 +3,7 @@ from typing import Optional
 
 import pytest
 
+from flatfs import _utils
 from flatfs.backends import LocalFlatFs
 from flatfs.exc import PathAccessError
 from flatfs.helpers import write_bytes
@@ -72,7 +73,7 @@ class TestLocalFlatFs:
         [
             (lambda x: x.exists("/.git/config"), "/.git/*"),
             (lambda x: list(x.read_chunks("/.git/config")), "/.git/*"),
-            (lambda x: x.write_chunks("/.git/config", [b"spam"]), "/.git/*"),
+            (lambda x: list(x.write_chunks("/.git/config", _utils.split_into_chunks(b"payload", 3))), "/.git/*"),
             (lambda x: x.remove("/.git/config"), "/.git/*"),
         ],
     )

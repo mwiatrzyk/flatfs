@@ -108,7 +108,7 @@ async def test_create_file_from_chunks_and_read_it_back(uut: UUT, path: str, chu
         for chunk in chunked_data:
             yield chunk
 
-    await uut.write_chunks(path, gen())
+    assert [x async for x in uut.write_chunks(path, gen())] == [len(y) for y in chunked_data]
     assert await async_read_bytes(uut, path) == b"".join(chunked_data)
 
 

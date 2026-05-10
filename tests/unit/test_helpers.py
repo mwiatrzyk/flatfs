@@ -1,6 +1,6 @@
 import pytest
 
-from mockify.api import Mock, Iterate, YieldAsync, Invoke, InvokeAsync, Any, Return, satisfied
+from mockify.api import Mock, Iterate, YieldAsync, Invoke, Any, Return, satisfied
 
 from flatfs.helpers import BinaryReader, async_read_bytes, async_write_bytes, read_bytes, write_bytes
 
@@ -33,10 +33,12 @@ def test_write_bytes(fs, path, chunk_size, data, expected_chunks):
     chunks = []
 
     def write_chunks(path, gen):
-        chunks.extend(gen)
+        for chunk in gen:
+            chunks.append(chunk)
+            yield len(chunk)
 
     fs.write_chunks.expect_call(path, Any()).will_once(Invoke(write_chunks))
-    write_bytes(fs, path, data, chunk_size)
+    assert write_bytes(fs, path, data, chunk_size) == len(data)
     assert chunks == expected_chunks
 
 
@@ -61,10 +63,12 @@ async def test_async_write_bytes(fs, path, chunk_size, data, expected_chunks):
     chunks = []
 
     async def write_chunks(path, gen):
-        chunks.extend([x async for x in gen])
+        async for chunk in gen:
+            chunks.append(chunk)
+            yield len(chunk)
 
-    fs.write_chunks.expect_call(path, Any()).will_once(InvokeAsync(write_chunks))
-    await async_write_bytes(fs, path, data, chunk_size)
+    fs.write_chunks.expect_call(path, Any()).will_once(Invoke(write_chunks))
+    assert (await async_write_bytes(fs, path, data, chunk_size)) == len(data)
     assert chunks == expected_chunks
 
 

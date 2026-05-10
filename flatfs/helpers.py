@@ -1,4 +1,4 @@
-from . import _export
+from . import _export, _utils
 from .interface import SupportsAsyncReadChunks, SupportsAsyncWriteChunks, SupportsReadChunks, SupportsWriteChunks
 
 __all__ = export = _export.Export()  # type: ignore
@@ -52,17 +52,10 @@ def write_bytes(fs: SupportsWriteChunks, path: str, data: bytes, chunk_size: int
 
         Defaults to 64kB.
     """
-
-    def gen():
-        data_left = data
-        while True:
-            chunk = data_left[:chunk_size]
-            if not chunk:
-                break
-            data_left = data_left[chunk_size:]
-            yield chunk
-
-    return fs.write_chunks(path, gen())
+    total_bytes = 0
+    for byte_count in fs.write_chunks(path, _utils.split_into_chunks(data, chunk_size)):
+        total_bytes += byte_count
+    return total_bytes
 
 
 @export
@@ -97,17 +90,10 @@ async def async_read_bytes(fs: SupportsAsyncReadChunks, path: str, chunk_size: i
 @export
 async def async_write_bytes(fs: SupportsAsyncWriteChunks, path: str, data: bytes, chunk_size: int = 65535) -> int:
     """Same as :func:`write_bytes`, but for async code."""
-
-    async def gen():
-        data_left = data
-        while True:
-            chunk = data_left[:chunk_size]
-            if not chunk:
-                break
-            data_left = data_left[chunk_size:]
-            yield chunk
-
-    return await fs.write_chunks(path, gen())
+    total_bytes = 0
+    async for byte_count in fs.write_chunks(path, _utils.async_split_into_chunks(data, chunk_size)):
+        total_bytes += byte_count
+    return total_bytes
 
 
 @export
@@ -156,3 +142,12 @@ class BinaryReader:
         """
         self.__current_chunk = b""
         self.__chunk_gen.close()
+
+
+@export
+class BinaryWriter:
+    def __init__(self, fs: SupportsWriteChunks, path: str):
+        pass
+
+    def write(self, data: bytes) -> int:
+        return 0

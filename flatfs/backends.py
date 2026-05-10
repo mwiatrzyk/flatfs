@@ -5,7 +5,7 @@ import fnmatch
 import os
 import pathlib
 from queue import Queue
-from typing import AsyncGenerator, AsyncIterable, Generator, Iterable, Iterator, Optional
+from typing import AsyncGenerator, AsyncIterator, Generator, Iterator, Optional
 
 from flatfs.exc import PathAccessError, PathNotFoundError
 from flatfs.interface import FlatFsReaderWriter, Stat
@@ -107,14 +107,12 @@ class LocalFlatFs:
                     break
                 yield chunk
 
-    def write_chunks(self, path: str, chunks: Iterable[bytes]) -> int:
+    def write_chunks(self, path: str, chunk_gen: Generator[bytes, None, None]) -> Generator[int, None, None]:
         abspath = self.__make_abspath(path)
         abspath.parent.mkdir(parents=True, exist_ok=True)
-        total_bytes = 0
         with abspath.open("wb") as fd:
-            for chunk in chunks:
-                total_bytes += fd.write(chunk)
-        return total_bytes
+            for chunk in chunk_gen:
+                yield fd.write(chunk)
 
     def remove(self, path: str):
         abspath = self.__make_abspath(path)
@@ -165,15 +163,18 @@ class InMemoryFlatFs:
             data_left = data_left[chunk_size:]
             yield chunk
 
-    def write_chunks(self, path: str, chunks: Iterable[bytes]) -> int:
-        payload = b"".join(chunks)
+    def write_chunks(self, path: str, chunk_gen: Generator[bytes, None, None]) -> Generator[int, None, None]:
         now = _utils.utcnow()
         stat = Stat(
             modified=now,
-            size=len(payload),
+            size=0,
         )
-        self.__storage[self.__make_key(path)] = self._File(payload, stat)
-        return stat.size
+        self.__storage[self.__make_key(path)] = file = self._File(b"", stat)
+        for chunk in chunk_gen:
+            file.payload += chunk
+            write_count = len(chunk)
+            file.stat.size += write_count
+            yield write_count
 
     def remove(self, path: str):
         key = self.__make_key(path)
@@ -221,7 +222,7 @@ class AsyncFlatFsAdapter:
     async def stat(self, path: str) -> Stat:
         return await _utils.run_blocking(self.__target.stat, path)
 
-    async def read_chunks(self, path: str, chunk_size: int = 65535) -> AsyncGenerator[bytes, None]:
+    async def read_chunks(self, path: str, chunk_size: int = 65535) -> AsyncIterator[bytes]:
 
         def reader():
             try:
@@ -242,21 +243,23 @@ class AsyncFlatFsAdapter:
                 raise chunk_or_exc
             yield chunk_or_exc
 
-    async def write_chunks(self, path: str, chunks: AsyncIterable[bytes]) -> int:
+    async def write_chunks(self, path: str, chunk_gen: AsyncGenerator[bytes, None]) -> AsyncGenerator[int, None]:
 
-        def gen() -> Generator[bytes, None, None]:
-            while True:
-                chunk = queue.get()
-                if not chunk:
-                    return
-                yield chunk
+        def blocking_writer():
+            for write_count in self.__target.write_chunks(path, _utils.generate_chunks_from_queue(chunk_queue)):
+                loop.call_soon_threadsafe(ack_queue.put_nowait, write_count)
 
-        queue: Queue[bytes] = Queue()
-        task = asyncio.create_task(_utils.run_blocking(self.__target.write_chunks, path, gen()))
-        async for chunk in chunks:
-            queue.put(chunk)
-        queue.put(b"")
-        return await task
+        loop = asyncio.get_running_loop()
+        chunk_queue: Queue[bytes] = Queue()
+        ack_queue: asyncio.Queue[int] = asyncio.Queue()
+        task = asyncio.create_task(_utils.run_blocking(blocking_writer))
+        try:
+            async for chunk in chunk_gen:
+                chunk_queue.put(chunk)
+                yield await ack_queue.get()
+        finally:
+            chunk_queue.put(b"")
+            await task
 
     async def remove(self, path: str):
         await _utils.run_blocking(self.__target.remove, path)
