@@ -99,3 +99,12 @@ def generate_chunks_from_queue(chunk_queue: queue.Queue[bytes]) -> Generator[byt
         if not chunk:
             return
         yield chunk
+
+
+async def async_generate_chunks_from_queue(chunk_queue: asyncio.Queue[bytes]) -> AsyncGenerator[bytes, None]:
+    """Async variant of the :func:`generate_chunks_from_queue` function."""
+    while True:
+        chunk = await chunk_queue.get()
+        if not chunk:
+            return
+        yield chunk
