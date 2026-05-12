@@ -1,6 +1,6 @@
 [project]
 name = "flatfs"
-version = "0.2.0"
+version = "0.3.0"
 description = "Minimal filesystem abstraction with pluggable backends, treating paths as keys and file contents as values."
 authors = [
     {name = "Maciej Wiatrzyk", email = "maciej.wiatrzyk@gmail.com"}

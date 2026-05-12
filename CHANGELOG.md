@@ -1,3 +1,13 @@
+## 0.3.0 (2026-05-12)
+
+### BREAKING CHANGES
+
+- refactor `(async_)read_chunks` and `(async_)write_chunks` methods to use generators in a more flexible way
+
+### Feat
+
+- add helpers for buffered stream-based reading and writing
+
 ## 0.2.0 (2026-05-09)
 
 ### Fix
@@ -8,13 +18,13 @@
 
 - add `BinaryReader` helper class for reading files in more feasible way
 
-## 0.1.0 (2026-05-08)
+## 0.1.0 (2026-05-09)
 
 ### Feat
 
 - add `(Async)FlatFsReader.stat()` method for getting basic file stats: modification time in UTC and file size
 
-## 0.0.1 (2026-05-07)
+## 0.0.1 (2026-05-09)
 
 Initial release.
 
