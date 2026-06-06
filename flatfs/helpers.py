@@ -87,11 +87,13 @@ def read_text(fs: SupportsReadChunks, path: str, encoding: str = "utf-8", chunk_
 
 
 @export
-def write_text(fs: SupportsWriteChunks, path: str, data: str, encoding: str = "utf-8", chunk_size: int = 65535):
+def write_text(fs: SupportsWriteChunks, path: str, data: str, encoding: str = "utf-8", chunk_size: int = 65535) -> int:
     """Create new text file or replace existing with given text data.
 
     Uses :func:`write_bytes` underneath and just encodes given *data* with
     provided *encoding*, which is ``utf-8`` by default.
+
+    Returns the number of bytes written.
 
     :param fs:
         FlatFS object to write to.

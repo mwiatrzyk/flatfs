@@ -1,5 +1,9 @@
+import pathlib
+
 from invoke.tasks import task
 from invoke.context import Context
+
+from flatfs.backends import LocalFlatFs
 
 
 @task(help={"fix": "Reformat code instead of just checking."})
@@ -11,7 +15,7 @@ def check_format(ctx: Context, fix: bool = False):
 @task(help={"fix": "Fix all fixable errors instead of just checking."})
 def check_lint(ctx: Context, fix: bool = False):
     """Perform static code analysis."""
-    ctx.run(f"ruff check --exclude api.py {'--fix' if fix else ''}")
+    ctx.run(f"ruff check --exclude api.py --exclude docs/source/conf.py {'--fix' if fix else ''}")
     ctx.run("mypy flatfs")
 
 
@@ -32,6 +36,12 @@ def check_coverage(ctx: Context, report: str = "term", fail_under: int = 95):
     ctx.run(f"pytest --cov=flatfs --cov-branch --cov-report={report} --cov-fail-under={fail_under}")
 
 
+@task
+def check_docs(ctx: Context):
+    """Check code snippet correctness across entire documentation."""
+    ctx.run("sphinx-build -M doctest docs/source docs/build/html")
+
+
 @task(help={"fix": "Fix all fixable errors instead of just reporting them."})
 def check(ctx: Context, fix: bool = False):
     """Run all checks."""
@@ -39,6 +49,7 @@ def check(ctx: Context, fix: bool = False):
     ctx.run(f"inv check-lint {'--fix' if fix else ''}")
     ctx.run("inv check-tests")
     ctx.run("inv check-coverage")
+    ctx.run("inv check-docs")
 
 
 @task(help={"port": "The port number to use. Default: 8888"})
@@ -46,6 +57,24 @@ def serve_coverage(ctx: Context, port: int = 8888):
     """Generate coverage report in HTML format and serve it locally."""
     ctx.run("inv check-coverage --report html:reports/coverage/html --fail-under 0")
     ctx.run(f"python -m http.server {port} --directory reports/coverage/html")
+
+
+@task
+def build_docs(ctx: Context):
+    """Build documentation from source."""
+    ctx.run("sphinx-build -b html docs/source docs/build/html")
+
+
+@task
+def gen_api_docs(ctx: Context):
+    """Generate API reference sources from library public modules."""
+    ctx.run("scripts/gen_api_docs.py flatfs/ docs/source/api/")
+
+
+@task(build_docs)
+def serve_docs(ctx: Context, port: int = 8080):
+    """Build documentation and serve it locally using built-in HTTP server."""
+    ctx.run(f"python -m http.server {port} --directory docs/build/html")
 
 
 @task

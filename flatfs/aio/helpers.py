@@ -38,9 +38,9 @@ async def async_read_text(
 @export
 async def async_write_text(
     fs: SupportsAsyncWriteChunks, path: str, data: str, encoding: str = "utf-8", chunk_size: int = 65535
-):
+) -> int:
     """Async variant of the :func:`write_text` helper."""
-    await async_write_bytes(fs, path, data.encode(encoding), chunk_size)
+    return await async_write_bytes(fs, path, data.encode(encoding), chunk_size)
 
 
 @export
