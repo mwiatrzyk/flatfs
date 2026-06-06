@@ -1,9 +1,7 @@
-import pathlib
 
 from invoke.tasks import task
 from invoke.context import Context
 
-from flatfs.backends import LocalFlatFs
 
 
 @task(help={"fix": "Reformat code instead of just checking."})
