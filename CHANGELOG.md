@@ -1,3 +1,9 @@
+## 0.4.0 (2026-06-06)
+
+### Feat
+
+- add support for legacy Py39
+
 ## 0.3.0 (2026-05-12)
 
 ### BREAKING CHANGES
