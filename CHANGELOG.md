@@ -1,3 +1,9 @@
+## 0.5.0 (2026-06-06)
+
+### BREAKING CHANGES
+
+- extract async layer into a separate `flatfs.aio` module
+
 ## 0.4.0 (2026-06-06)
 
 ### Feat
