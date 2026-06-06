@@ -5,7 +5,7 @@ import fnmatch
 import os
 import pathlib
 from queue import Queue
-from typing import AsyncGenerator, AsyncIterator, Generator, Iterator, Optional
+from typing import AsyncGenerator, AsyncIterator, Generator, Iterator, Optional, Union
 
 from flatfs.exc import PathAccessError, PathNotFoundError
 from flatfs.interface import FlatFsReaderWriter, Stat
@@ -233,7 +233,7 @@ class AsyncFlatFsAdapter:
                 loop.call_soon_threadsafe(queue.put_nowait, e)
 
         loop = asyncio.get_running_loop()
-        queue: asyncio.Queue[bytes | Exception] = asyncio.Queue()
+        queue: asyncio.Queue[Union[bytes, Exception]] = asyncio.Queue()
         asyncio.create_task(_utils.run_blocking(reader))
         while True:
             chunk_or_exc = await queue.get()

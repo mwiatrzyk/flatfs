@@ -1,10 +1,9 @@
 import asyncio
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
 from queue import Queue
-from types import TracebackType
-from typing import Iterator, AsyncIterator
+from typing import Iterator, AsyncIterator, Optional
 
-from . import _export, _utils
+from . import _export, _utils, _compat
 from .interface import SupportsAsyncReadChunks, SupportsAsyncWriteChunks, SupportsReadChunks, SupportsWriteChunks
 
 __all__ = export = _export.Export()  # type: ignore
@@ -180,9 +179,7 @@ class BufferedWriter(AbstractContextManager):
     def __enter__(self) -> "BufferedWriter":
         return self
 
-    def __exit__(
-        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None
-    ) -> bool | None:
+    def __exit__(self, exc_type, exc_value, traceback) -> Optional[bool]:
         return self.close()
 
     def __write_chunk(self, chunk: bytes):
@@ -234,14 +231,12 @@ class AsyncBufferedWriter(AbstractAsyncContextManager):
     async def __aenter__(self) -> "AsyncBufferedWriter":
         return self
 
-    async def __aexit__(
-        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None
-    ) -> bool | None:
+    async def __aexit__(self, exc_type, exc_value, traceback) -> Optional[bool]:
         return await self.close()
 
     async def __write_chunk(self, chunk: bytes):
         self.__chunk_queue.put_nowait(chunk)
-        await anext(self.__writer)
+        await _compat.anext(self.__writer)
 
     async def write(self, data: bytes) -> int:
         self.__buffer += data
@@ -292,9 +287,7 @@ class BufferedReader(AbstractContextManager):
     def __enter__(self) -> "BufferedReader":
         return self
 
-    def __exit__(
-        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None
-    ) -> bool | None:
+    def __exit__(self, exc_type, exc_value, traceback) -> Optional[bool]:
         return self.close()
 
     def close(self):
@@ -320,9 +313,7 @@ class AsyncBufferedReader(AbstractAsyncContextManager):
     async def __aenter__(self) -> "AsyncBufferedReader":
         return self
 
-    async def __aexit__(
-        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None
-    ) -> bool | None:
+    async def __aexit__(self, exc_type, exc_value, traceback) -> Optional[bool]:
         return await self.close()
 
     async def close(self):
@@ -331,7 +322,7 @@ class AsyncBufferedReader(AbstractAsyncContextManager):
 
     async def read(self, count: int) -> bytes:
         if not self.__buffer:
-            self.__buffer = await anext(self.__reader, b"")
+            self.__buffer = await _compat.anext(self.__reader, b"")
         data = self.__buffer[:count]
         self.__buffer = self.__buffer[count:]
         return data
@@ -371,9 +362,7 @@ class BufferedTextReader(AbstractContextManager):
     def __enter__(self) -> "BufferedTextReader":
         return self
 
-    def __exit__(
-        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None
-    ) -> bool | None:
+    def __exit__(self, exc_type, exc_value, traceback) -> Optional[bool]:
         return self.close()
 
     def __iter__(self) -> Iterator[str]:
@@ -417,14 +406,12 @@ class AsyncBufferedTextReader(AbstractAsyncContextManager):
         self.__buffer = ""
 
     async def __read_next_chunk(self) -> str:
-        return (await anext(self.__reader, b"")).decode(self.__encoding)
+        return (await _compat.anext(self.__reader, b"")).decode(self.__encoding)
 
     async def __aenter__(self) -> "AsyncBufferedTextReader":
         return self
 
-    async def __aexit__(
-        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None
-    ) -> bool | None:
+    async def __aexit__(self, exc_type, exc_value, traceback) -> Optional[bool]:
         return await self.close()
 
     async def __aiter__(self) -> AsyncIterator[str]:
