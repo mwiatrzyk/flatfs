@@ -77,6 +77,9 @@ class LocalFlatFs:
             elif not self.__is_excluded(fullrelpath) and self.__is_included(fullrelpath):
                 yield fullrelpath
 
+    def uri(self, path: str) -> str:
+        return f"file://{self.__make_abspath(path)}"
+
     def scan(self) -> Iterator[str]:
         return self.__walk(self.__root_dir, "")
 
@@ -138,6 +141,9 @@ class InMemoryFlatFs:
     def __make_key(self, path: str) -> str:
         normalized_key = _utils.normalize_path(path)
         return normalized_key
+
+    def uri(self, path: str) -> str:
+        return f"mem://{self.__make_key(path)}"
 
     def scan(self) -> Iterator[str]:
         return iter(self.__storage.keys())

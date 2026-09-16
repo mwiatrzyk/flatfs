@@ -48,6 +48,19 @@ class SupportsAsyncWriteChunks(Protocol):
 class AsyncFlatFsReader(SupportsAsyncReadChunks, Protocol):
     """Async variant of the :class:`FlatFsReader` protocol."""
 
+    def uri(self, path: str) -> str:
+        """Get a unique URI string for the given path.
+
+        This method is meant to be used to get a fullpath-like representation
+        of the given path in a form of a URI string.
+
+        .. important::
+            The returned URI-like string is meant to be used for presentation
+            purposes only, where a sort of fullpath is needed (e.g. to display
+            error pointing to a missing file).
+        """
+        ...
+
     def scan(self) -> AsyncIterator[str]:
         """Return iterator that yields normalized paths to existing files.
 

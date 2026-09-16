@@ -1,7 +1,5 @@
-
 from invoke.tasks import task
 from invoke.context import Context
-
 
 
 @task(help={"fix": "Reformat code instead of just checking."})

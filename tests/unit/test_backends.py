@@ -1,10 +1,10 @@
 import pathlib
-from typing import Optional
+from typing import Callable, Optional
 
 import pytest
 
 from flatfs import _utils
-from flatfs.backends import LocalFlatFs
+from flatfs.backends import InMemoryFlatFs, LocalFlatFs
 from flatfs.exc import PathAccessError
 from flatfs.helpers import write_bytes
 from flatfs.interface import FlatFsReaderWriter
@@ -31,6 +31,16 @@ class TestLocalFlatFs:
     )
     def path(self, request: pytest.FixtureRequest):
         return request.param
+
+    @pytest.mark.parametrize(
+        "path, expected_uri_func",
+        [
+            ("foo.txt", lambda root_dir: f"file://{root_dir}/foo.txt"),
+            ("/bar/foo.txt", lambda root_dir: f"file://{root_dir}/bar/foo.txt"),
+        ],
+    )
+    def test_uri(self, uut: FlatFsReaderWriter, path: str, expected_uri_func: Callable, tmp_path: pathlib.Path):
+        assert uut.uri(path) == expected_uri_func(tmp_path)
 
     def test_scan_returns_normalized_paths_to_existing_files(self, uut: FlatFsReaderWriter):
         write_bytes(uut, "foo.txt", b"content of foo.txt")
@@ -80,3 +90,19 @@ class TestLocalFlatFs:
     def test_methods_requiring_path_fail_with_access_error_for_excluded_paths(self, uut: FlatFsReaderWriter, func):
         with pytest.raises(PathAccessError):
             func(uut)
+
+
+class TestInMemoryFlatFs:
+    @pytest.fixture
+    def uut(self):
+        return InMemoryFlatFs()
+
+    @pytest.mark.parametrize(
+        "path, expected_uri",
+        [
+            ("foo.txt", "mem:///foo.txt"),
+            ("/bar/foo.txt", "mem:///bar/foo.txt"),
+        ],
+    )
+    def test_uri(self, uut: FlatFsReaderWriter, path: str, expected_uri: str):
+        assert uut.uri(path) == expected_uri

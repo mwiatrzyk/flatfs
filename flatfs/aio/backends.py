@@ -25,6 +25,9 @@ class AsyncFlatFsAdapter:
     def __init__(self, target: FlatFsReaderWriter):
         self.__target = target
 
+    def uri(self, path: str) -> str:
+        return self.__target.uri(path)
+
     async def scan(self) -> AsyncGenerator[str, None]:
 
         def scanner():
