@@ -1,3 +1,9 @@
+## 0.6.0 (2026-09-16)
+
+### Feat
+
+- add `uri()` method for getting unique URI-like string for the given path
+
 ## 0.5.0 (2026-06-06)
 
 ### BREAKING CHANGES
