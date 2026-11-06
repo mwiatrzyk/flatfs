@@ -17,6 +17,7 @@ classifiers = [
 ]
 requires-python = ">=3.9,<4"
 dependencies = [
+    "atomicwrites (>=1.4.1,<2.0.0)"
 ]
 
 [project.urls]

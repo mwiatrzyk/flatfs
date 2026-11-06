@@ -5,6 +5,8 @@ import os
 import pathlib
 from typing import Generator, Iterator, Optional
 
+from atomicwrites import atomic_write
+
 from flatfs.exc import PathAccessError, PathNotFoundError
 from flatfs.interface import Stat
 
@@ -111,7 +113,7 @@ class LocalFlatFs:
     def write_chunks(self, path: str, chunk_gen: Generator[bytes, None, None]) -> Generator[int, None, None]:
         abspath = self.__make_abspath(path)
         abspath.parent.mkdir(parents=True, exist_ok=True)
-        with abspath.open("wb") as fd:
+        with atomic_write(abspath, mode="wb", overwrite=True) as fd:
             for chunk in chunk_gen:
                 yield fd.write(chunk)
 
