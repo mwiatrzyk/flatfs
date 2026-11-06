@@ -120,6 +120,10 @@ class LocalFlatFs:
         if not abspath.is_file():
             raise PathNotFoundError(path)
         abspath.unlink()
+        current = abspath.parent
+        while len(os.listdir(current)) == 0:
+            current.rmdir()
+            current = current.parent
 
 
 @export
