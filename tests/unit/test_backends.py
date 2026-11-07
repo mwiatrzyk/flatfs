@@ -1,5 +1,4 @@
 import pathlib
-import os
 from typing import Callable, Optional
 
 import pytest
@@ -92,10 +91,10 @@ class TestLocalFlatFs:
         with pytest.raises(PathAccessError):
             func(uut)
 
-    @pytest.mark.parametrize("path", [
-        "/foo/bar/baz/spam/more/spam.txt"
-    ])
-    def test_deleting_a_file_also_removes_intermediate_empty_directories_from_a_backend_filesystem(self, uut: FlatFsReaderWriter, tmp_path: pathlib.Path, path: str):
+    @pytest.mark.parametrize("path", ["/foo/bar/baz/spam/more/spam.txt"])
+    def test_deleting_a_file_also_removes_intermediate_empty_directories_from_a_backend_filesystem(
+        self, uut: FlatFsReaderWriter, tmp_path: pathlib.Path, path: str
+    ):
         segments = path.lstrip("/").split("/")
         write_bytes(uut, path, b"dummy data")
         assert tmp_path.joinpath(*segments).exists()
@@ -104,7 +103,9 @@ class TestLocalFlatFs:
         for i in range(1, len(segments)):
             assert not tmp_path.joinpath(*segments[:-i]).exists()
 
-    def test_deleting_a_file_does_not_remove_common_intermediate_directories(self, uut: FlatFsReaderWriter, tmp_path: pathlib.Path):
+    def test_deleting_a_file_does_not_remove_common_intermediate_directories(
+        self, uut: FlatFsReaderWriter, tmp_path: pathlib.Path
+    ):
         write_bytes(uut, "/foo/bar/baz.txt", b"baz")
         write_bytes(uut, "/foo/bar/spam/more/spam.txt", b"spam")
         uut.remove("/foo/bar/spam/more/spam.txt")

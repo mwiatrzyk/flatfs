@@ -5,7 +5,7 @@ import os
 import pathlib
 from typing import Generator, Iterator, Optional
 
-from atomicwrites import atomic_write
+from atomicwrites import atomic_write  # type: ignore
 
 from flatfs.exc import PathAccessError, PathNotFoundError
 from flatfs.interface import Stat
