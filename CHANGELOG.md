@@ -1,3 +1,13 @@
+## 0.7.0 (2026-11-07)
+
+### Fix
+
+- implementation of `remove` for `LocalFlatFs` also drops intermediate empty directories
+
+### Feat
+
+- use `atomicwrites` for `LocalFlatFs` to write files atomically
+
 ## 0.6.0 (2026-09-16)
 
 ### Feat
