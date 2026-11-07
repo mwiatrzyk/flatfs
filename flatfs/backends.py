@@ -17,9 +17,9 @@ __all__ = export = _export.Export()  # type: ignore
 
 @export
 class LocalFlatFs:
-    """FlatFS implementation using local filesystem to store files.
+    """FlatFS implementation using a local filesystem to store files.
 
-    You can use this to access files from an existing directory (the paths are
+    You can use this to access files within an existing directory (the paths are
     then relative to *root_dir*), or to create a completely new filesystem
     inside an empty directory.
 
@@ -29,19 +29,19 @@ class LocalFlatFs:
     :param exclude:
         The glob patterns of paths to exclude.
 
-        For example, you may want to exclude ``.git`` directory when you use
-        FlatFS to access content of some Git repository.
+        For example, you may want to exclude the ``.git`` directory when you use
+        FlatFS to access the content of a Git repository.
 
-        For more details on pattern syntax used check :mod:`fnmatch` which is
+        For more details on the pattern syntax, check :mod:`fnmatch` which is
         used underneath.
 
     :param include:
         The glob patterns of paths to include.
 
-        These can only be paths from inside root directory. For example, you
-        may wish to allow just ``src`` and ``test`` dirs, not all files.
+        These can only be paths from within the root directory. For example, you
+        may wish to allow only the ``src`` and ``test`` directories, not all files.
 
-        For more details on pattern syntax used check :mod:`fnmatch` which is
+        For more details on the pattern syntax, check :mod:`fnmatch` which is
         used underneath.
     """
 
