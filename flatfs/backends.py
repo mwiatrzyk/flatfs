@@ -83,7 +83,9 @@ class LocalFlatFs:
         return f"file://{self.__make_abspath(path)}"
 
     def scan(self) -> Iterator[str]:
-        return self.__walk(self.__root_dir, "")
+        if not self.__root_dir.is_dir():
+            return
+        yield from self.__walk(self.__root_dir, "")
 
     def stat(self, path: str) -> Stat:
         abspath = self.__make_abspath(path)

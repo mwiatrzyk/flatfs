@@ -115,6 +115,10 @@ class TestLocalFlatFs:
         assert not tmp_path.joinpath("foo/bar/spam").exists()
         assert tmp_path.joinpath("foo/bar").exists()
 
+    def test_scan_yields_nothing_if_root_dir_does_not_exist_yet(self, tmp_path: pathlib.Path):
+        uut = LocalFlatFs(tmp_path / "not" / "exists" / "yet")
+        assert [x for x in uut.scan()] == []
+
 
 class TestInMemoryFlatFs:
     @pytest.fixture
