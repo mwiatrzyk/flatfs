@@ -1,3 +1,9 @@
+## 0.7.1 (2026-11-11)
+
+### Fix
+
+- bug in `LocalFlatFs.scan` for non-existent root directory
+
 ## 0.7.0 (2026-11-07)
 
 ### Fix
